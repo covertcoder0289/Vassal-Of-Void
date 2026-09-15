@@ -28,6 +28,8 @@ public:
 
 protected:
     // Core spatial state
+    float spawnX = 0.0f;
+    float spawnY = 0.0f;
     float xPosition = 0.0f;
     float yPosition = 0.0f;
     float width = 0.0f;

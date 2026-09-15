@@ -21,7 +21,7 @@ public:
     // Initialize map dimensions and fill data
     void loadMap(int columns, int rows, const std::vector<int>& mapData);
 
-    void draw() const;
+    void draw(float cameraX = 0.0f, float cameraY = 0.0f) const;
 
     // Helper functions for physics/collision
     int getTileAt(int col, int row) const;

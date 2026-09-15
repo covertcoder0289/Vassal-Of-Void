@@ -1,10 +1,10 @@
-// src/world/RoomLoader.hpp
-#pragma once
-#include <vector>
 #include <string>
+#include <vector>
 
-namespace RoomLoader {
-    // Reads a comma-separated grid from a RomFS path.
-    // Returns false if the file couldn't be opened.
-    bool loadFromFile(const std::string& path, int& outCols, int& outRows, std::vector<int>& outData);
-}
+class RoomLoader {
+public:
+static bool loadFromFile(const std::string& path, int& outCols, int& outRows, std::vector<int>& outData);
+
+    // Parses the object layer named "spawn_point" and retrieves its x and y coordinates.
+static bool loadSpawnPoint(const std::string& path, float& outX, float& outY);
+};

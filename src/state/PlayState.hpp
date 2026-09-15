@@ -3,6 +3,7 @@
 #include "PauseState.hpp"
 #include "entities/player/Player.hpp"
 #include "world/Tilemap.hpp"
+#include "core/Camera.hpp"
 #include <memory>
 
 // Forward declaration to prevent include loops
@@ -28,4 +29,5 @@ private:
     Tilemap tilemap;
     C2D_SpriteSheet spriteSheet = nullptr;
     C2D_Image blockTileImage;
+
 };

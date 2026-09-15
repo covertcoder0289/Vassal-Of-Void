@@ -136,9 +136,11 @@ void Player::update() {
 // Left empty on purpose to satisfy linker. Can be used when updating without tilemap context
 }
 
-void Player::draw() const {
+void Player::draw(float cameraX, float cameraY) const {
+    float screenX = xPosition - cameraX;
+    float screenY = yPosition - cameraY;
     //u32 debugColor = isOnGround ? C2D_Color32(0,255,0,255) : color;
-    C2D_DrawRectSolid(xPosition, yPosition, 0.5f, width, height, color);
+    C2D_DrawRectSolid(screenX, screenY, 0.5f, width, height, color);
 }
 
 void Player::onCollision(Entity& otherEntity) {

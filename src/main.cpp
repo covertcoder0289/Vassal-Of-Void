@@ -9,6 +9,8 @@
 
 int main(int argc, char* argv[]) {
     gfxInitDefault();
+    consoleInit(GFX_BOTTOM, NULL);
+
     Result romfsResult = romfsInit();
     if (R_FAILED(romfsResult)) {
         // RomFS failed to mount — nothing under "romfs:/" will ever load.
@@ -39,10 +41,10 @@ int main(int argc, char* argv[]) {
         //Draw top screen
         stateManager.drawTopScreen();
         
-        C2D_TargetClear(bottom, C2D_Color32(10, 10, 15, 255));
-        C2D_SceneBegin(bottom);
+        //C2D_TargetClear(bottom, C2D_Color32(10, 10, 15, 255));
+        //C2D_SceneBegin(bottom);
         //Draw bottom screen
-        stateManager.drawBottomScreen();
+        //stateManager.drawBottomScreen();
 
         C3D_FrameEnd(0);
     }

@@ -22,7 +22,7 @@ int Tilemap::getTileAtPosition(float worldX, float worldY) const {
     return getTileAt(col, row);
 }
 
-void Tilemap::draw() const {
+void Tilemap::draw(float cameraX, float cameraY) const {
     for (int row = 0; row < mapRows; ++row) {
         for (int col = 0; col < mapColumns; ++col) {
             int tileType = getTileAt(col, row);
@@ -30,17 +30,21 @@ void Tilemap::draw() const {
             // Skip air tiles (ID 0)
             if (tileType == AIR) continue;
 
-            float drawX = col * TILE_SIZE;
-            float drawY = row * TILE_SIZE;
+            float screenX = (col * TILE_SIZE) - cameraX;
+            float screenY = (row * TILE_SIZE) - cameraY;
 
+            // Optional viewport culling: skip rendering tiles off-screen
+            if (screenX + TILE_SIZE < 0 || screenX > 400.0f ||
+                screenY + TILE_SIZE < 0 || screenY > 240.0f) {
+                continue;
+            }
+            
             if (tileType == GROUND || tileType == PLATFORM) {
-                float posX = col * TILE_SIZE;
-                float posY = row * TILE_SIZE;
-                C2D_DrawImageAt(tileTexture, posX, posY, 0.5f, nullptr, 1.0f, 1.0f);
+                C2D_DrawImageAt(tileTexture, screenX, screenY, 0.5f, nullptr, 1.0f, 1.0f);
             } else {
                 // Default color for unknown tile types
                 u32 tileColor = Colors::grayOverlay;
-                C2D_DrawRectSolid(drawX, drawY, 0.5f, TILE_SIZE, TILE_SIZE, tileColor);
+                C2D_DrawRectSolid(screenX, screenY, 0.5f, TILE_SIZE, TILE_SIZE, tileColor);
             }
 
         }

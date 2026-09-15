@@ -38,7 +38,8 @@ public:
 
     void update();
     void update(const Tilemap& tilemap);
-    void draw() const override;
+    void draw(float cameraX, float cameraY) const;
+    void draw() const override { draw(0.0f, 0.0f); }
     void onCollision(Entity& otherEntity) override;
 
     // Helper method to check if a specific world point is solid
