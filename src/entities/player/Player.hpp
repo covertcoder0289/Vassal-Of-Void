@@ -9,7 +9,7 @@
 
 class Player : public Entity {
 public:
-    enum class PlaterState{
+    enum class PlayerState{
         Idle,
         Walking,
         Running,
@@ -44,13 +44,15 @@ public:
 
     // Helper method to check if a specific world point is solid
     bool isSolidTile(const Tilemap& tilemap, float worldX, float worldY) const;
+    void setState(PlayerState newState) { currentState = newState; }
 
 private:
     u32 color;
     float moveSpeed = 0.0f;
+    float runSpeed = 0.0f;
     float gravity = 0.0f;
     float jumpVelocity = 0.0f;
     float maxFallSpeed = 0.0f;
     float jumpCutMultiplier = 0.0f;
-    PlaterState currentState = PlaterState::Idle;
+    PlayerState currentState = PlayerState::Idle;
 };

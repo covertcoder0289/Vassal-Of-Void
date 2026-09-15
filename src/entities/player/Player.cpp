@@ -14,7 +14,8 @@ namespace {
         float height = 32.0f;
         float xPosition = (TOP_SCREEN_WIDTH - 16.0f) * 0.5f;
         float yPosition = (TOP_SCREEN_HEIGHT - 16.0f) * 0.5f;
-        float moveSpeed = 2.0f;
+        float moveSpeed = 3.0f;
+        float runSpeed = 4.0f;
         float gravity = 0.45f;
         float jumpVelocity = -8.5f;
         float maxFallSpeed = 6.0f;//6
@@ -31,6 +32,7 @@ Player::Player() {
     xPosition = playerData.xPosition;
     yPosition = playerData.yPosition;
     moveSpeed = playerData.moveSpeed;
+    runSpeed = playerData.runSpeed;
     gravity = playerData.gravity;
     jumpVelocity = playerData.jumpVelocity;
     maxFallSpeed = playerData.maxFallSpeed;
@@ -49,10 +51,24 @@ bool Player::isSolidTile(const Tilemap& tilemap, float worldX, float worldY) con
 void Player::update(const Tilemap& tilemap) {
     float moveX, moveY;
     InputMap::getMoveAxis(moveX, moveY);
-    velocityX = moveX * moveSpeed;
-    const float facingThreshold = 0.2f;
-    if (moveX > facingThreshold)      facingDirection = 1;
-    else if (moveX < -facingThreshold) facingDirection = -1;
+
+    const float stickDeadZone = 0.2f;
+    if((moveX < -stickDeadZone && moveX > -0.9f) || (moveX > stickDeadZone && moveX < 0.9f)) {
+        currentState = PlayerState::Walking;
+        velocityX = moveX * moveSpeed;
+        printf("Player is walking with velocityX: %.2f\n", velocityX);
+    }else if(moveX <= -0.9f || moveX >= 0.9f) {
+        currentState = PlayerState::Running;
+        velocityX = moveX * runSpeed;
+        printf("Player is running with velocityX: %.2f\n", velocityX);
+    }else {
+        currentState = PlayerState::Idle;
+        velocityX = 0.0f;
+        printf("Player is idle with velocityX: %.2f\n", velocityX);
+    }
+
+    if (moveX > stickDeadZone)      facingDirection = 1;
+    else if (moveX < -stickDeadZone) facingDirection = -1;
     // else: keep last facing — don't reset to a default on release
 
     // Apply Gravity
@@ -78,6 +94,7 @@ void Player::update(const Tilemap& tilemap) {
 
     if (velocityY > 0.0f) { // Moving Down (Falling)
         // Sample bottom-left and bottom-right corners of player box
+        currentState = PlayerState::Falling;
         float footY = yPosition + height;
         float leftX = xPosition + 1.0f;         // 1px padding to avoid edge clipping
         float rightX = xPosition + width - 1.0f;
@@ -86,12 +103,14 @@ void Player::update(const Tilemap& tilemap) {
             // Find the top edge of the tile row we collided with
             int targetRow = tilemap.worldToRow(footY);
             yPosition = (targetRow * Tilemap::TILE_SIZE) - height;
+            currentState = PlayerState::Idle;
             velocityY = 0.0f;
             isOnGround = true;
         }
     } 
     else if (velocityY < 0.0f) { // Moving Up (Jumping)
         // Sample top-left and top-right corners
+        currentState = PlayerState::Jumping;
         float headY = yPosition;
         float leftX = xPosition + 1.0f;
         float rightX = xPosition + width - 1.0f;
@@ -113,7 +132,7 @@ void Player::update(const Tilemap& tilemap) {
         float rightX = xPosition + width;
         float topY = yPosition + 1.0f;
         float bottomY = yPosition + height - 1.0f;
-
+        
         if (isSolidTile(tilemap, rightX, topY) || isSolidTile(tilemap, rightX, bottomY)) {
             int targetCol = tilemap.worldToCol(rightX);
             xPosition = (targetCol * Tilemap::TILE_SIZE) - width;

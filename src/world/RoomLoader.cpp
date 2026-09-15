@@ -349,16 +349,16 @@ bool RoomLoader::loadFromFile(
         static_cast<size_t>(outRows);
 
 
-    printf(
-        "ROOM LOAD DATA:\n"
-        "  dimensions: %d x %d\n"
-        "  expected tiles: %zu\n"
-        "  parsed tiles:   %zu\n",
-        outCols,
-        outRows,
-        expectedSize,
-        outData.size()
-    );
+    // printf(
+    //     "ROOM LOAD DATA:\n"
+    //     "  dimensions: %d x %d\n"
+    //     "  expected tiles: %zu\n"
+    //     "  parsed tiles:   %zu\n",
+    //     outCols,
+    //     outRows,
+    //     expectedSize,
+    //     outData.size()
+    // );
 
     if (outData.size() != expectedSize) {
 
@@ -368,7 +368,7 @@ bool RoomLoader::loadFromFile(
 
         return false;
     }
-    printf("ROOM LOAD SUCCESS\n");
+    //printf("ROOM LOAD SUCCESS\n");
 
     return true;
 }
@@ -555,11 +555,7 @@ bool RoomLoader::loadSpawnPoint(
     );
 
 
-    printf(
-        "SPAWN LOAD SUCCESS: %.2f, %.2f\n",
-        outX,
-        outY
-    );
+    printf("SPAWN LOAD SUCCESS: %.2f, %.2f\n",outX,outY);
 
     return true;
 }
