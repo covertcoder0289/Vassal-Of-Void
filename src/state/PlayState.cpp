@@ -3,6 +3,7 @@
 #include "StateManager.hpp"
 //#include "../physics/CollisionWorld.hpp"
 #include <3ds.h>
+#include "sprites.h"
 
 PlayState::PlayState(StateManager& stateManager) 
     : stateManager(stateManager) {
@@ -11,7 +12,35 @@ PlayState::PlayState(StateManager& stateManager)
     pauseOverlay = std::make_unique<PauseState>(stateManager, [this]() { isPaused = false; });
 }
 
-PlayState::~PlayState() = default;
+PlayState::~PlayState()
+{  
+    cleanup();
+}
+
+bool PlayState::init() {
+    // Load the compiled t3x spritesheet from RomFS or embedded memory
+    spriteSheet = C2D_SpriteSheetLoad("romfs:/gfx/sprites.t3x");
+    if (!spriteSheet) {
+        svcBreak(USERBREAK_PANIC);
+        return false; // Failed to load texture sheet
+    }
+
+    // Retrieve the image handle for your custom 16x16 block
+    blockTileImage = C2D_SpriteSheetGetImage(spriteSheet, sprites_idx);
+
+    // Pass the tile image handle to the tilemap so it knows what to render
+    tilemap.setTileTexture(blockTileImage);
+
+    return true;
+}
+
+void PlayState::cleanup() {
+    // Free VRAM/RAM taken up by the sprite sheet
+    if (spriteSheet) {
+        C2D_SpriteSheetFree(spriteSheet);
+        spriteSheet = nullptr;
+    }
+}
 
 void PlayState::buildTestRoom() {
     constexpr int COLS = 25;

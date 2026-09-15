@@ -33,9 +33,11 @@ public:
 
     int getColumns() const { return mapColumns; }
     int getRows() const { return mapRows; }
+    void setTileTexture(C2D_Image texture) { tileTexture = texture; }
 
 private:
     int mapColumns = 0;
     int mapRows = 0;
     std::vector<int> tiles; // Grid stored as a 1D array
+    C2D_Image tileTexture = {}; // Texture for rendering solid tiles
 };

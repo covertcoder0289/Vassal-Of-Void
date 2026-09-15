@@ -1,24 +1,19 @@
 //src/state/StateManager.cpp
-
 #pragma once
 #include "GameState.hpp"
 #include <memory>
+#include <citro2d.h>
+#include <3ds.h>
 
 class StateManager {
 public:
-    void setState(std::unique_ptr<GameState> newState) {
-        pending = std::move(newState);
-    }
+    StateManager() = default;
+    ~StateManager() = default;
 
-    void update() {
-        if (pending) {
-            current = std::move(pending); // old state destroyed here
-        }
-        if (current) current->update();
-    }
-
-    void drawTopScreen()    { if (current) current->drawTopScreen(); }
-    void drawBottomScreen() { if (current) current->drawBottomScreen(); }
+    void setState(std::unique_ptr<GameState> newState);
+    void update();
+    void drawTopScreen();
+    void drawBottomScreen();
 
 private:
     std::unique_ptr<GameState> current;

@@ -12,4 +12,5 @@ namespace Colors{
     inline constexpr u32 pauseHighlight =  C2D_Color32(0, 212, 255, 255);
     inline constexpr u32 testGroundColor =  C2D_Color32(255, 220, 0, 255);
     inline constexpr u32 testPlatformColor =  C2D_Color32(255, 220, 0, 255);
+    inline constexpr u32 green =  C2D_Color32(0, 255, 0, 255);
 };

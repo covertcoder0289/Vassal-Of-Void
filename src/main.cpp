@@ -9,6 +9,13 @@
 
 int main(int argc, char* argv[]) {
     gfxInitDefault();
+    Result romfsResult = romfsInit();
+    if (R_FAILED(romfsResult)) {
+        // RomFS failed to mount — nothing under "romfs:/" will ever load.
+        // Loud and immediate is better than a mysterious null pointer three files later.
+        svcBreak(USERBREAK_PANIC);
+    }
+
     C3D_Init(C3D_DEFAULT_CMDBUF_SIZE);
     C2D_Init(C2D_DEFAULT_MAX_OBJECTS);
     C2D_Prepare();
@@ -25,7 +32,6 @@ int main(int argc, char* argv[]) {
         stateManager.update();
         u32 kDown = hidKeysDown();
         //if(kDown & KEY_START) break;
-
         C3D_FrameBegin(C3D_FRAME_SYNCDRAW);
 
         C2D_TargetClear(top, C2D_Color32(20, 20, 30, 255));
@@ -43,6 +49,7 @@ int main(int argc, char* argv[]) {
 
     C2D_Fini();
     C3D_Fini();
+    romfsExit();
     gfxExit();
     return 0;
 }

@@ -16,8 +16,8 @@ namespace {
         float yPosition = (TOP_SCREEN_HEIGHT - 16.0f) * 0.5f;
         float moveSpeed = 2.0f;
         float gravity = 0.45f;
-        float jumpVelocity = -7.5f;
-        float maxFallSpeed = 8.0f;//6
+        float jumpVelocity = -8.5f;
+        float maxFallSpeed = 6.0f;//6
         float jumpCutMultiplier = 0.5f;
         bool isOnGround = false;
         u32 color = Colors::white;
@@ -137,8 +137,8 @@ void Player::update() {
 }
 
 void Player::draw() const {
-    u32 debugColor = isOnGround ? C2D_Color32(0,255,0,255) : color;
-    C2D_DrawRectSolid(xPosition, yPosition, 0.5f, width, height, debugColor);
+    //u32 debugColor = isOnGround ? C2D_Color32(0,255,0,255) : color;
+    C2D_DrawRectSolid(xPosition, yPosition, 0.5f, width, height, color);
 }
 
 void Player::onCollision(Entity& otherEntity) {

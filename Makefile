@@ -16,10 +16,9 @@ include $(DEVKITARM)/3ds_rules
 # DATA is a list of directories containing data files
 # INCLUDES is a list of directories containing header files
 #---------------------------------------------------------------------------------
-TARGET      :=  build/VassalOfVoid
+TARGET      :=  VassalOfVoid
 BUILD       :=  build
 SOURCES     :=  src \
-SOURCES     :=  romfs \
                 src/abilities \
                 src/combat \
                 src/common \
@@ -37,8 +36,8 @@ SOURCES     :=  romfs \
 DATA        :=  data
 INCLUDES    :=  src common
 GRAPHICS    :=  gfx
-GFXBUILD    :=  $(BUILD)
 ROMFS       :=  romfs
+GFXBUILD    :=  $(ROMFS)/gfx
 
 #---------------------------------------------------------------------------------
 # options for code generation

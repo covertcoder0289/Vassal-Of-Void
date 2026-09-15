@@ -13,6 +13,8 @@ public:
     explicit PlayState(StateManager& stateManager);
     ~PlayState() override;
 
+    bool init() override;
+    void cleanup() override;
     void update() override;
     void drawTopScreen() override;
     void drawBottomScreen() override;
@@ -24,4 +26,6 @@ private:
     StateManager& stateManager;
     std::unique_ptr<PauseState> pauseOverlay;
     Tilemap tilemap;
+    C2D_SpriteSheet spriteSheet = nullptr;
+    C2D_Image blockTileImage;
 };
