@@ -69,7 +69,7 @@ void Player::update(const Tilemap& tilemap) {
         velocityX = 0.0f;
     }
 
-    if (moveX > stickDeadZone)      facingDirection = 1;
+    if (moveX > stickDeadZone) facingDirection = 1;
     else if (moveX < -stickDeadZone) facingDirection = -1;
     // else: keep last facing — don't reset to a default on release
 
@@ -177,6 +177,26 @@ void Player::draw(float cameraX, float cameraY) const {
     float screenY = yPosition - cameraY;
     //u32 debugColor = isOnGround ? C2D_Color32(0,255,0,255) : color;
     C2D_DrawRectSolid(screenX, screenY, 0.5f, width, height, color);
+
+    float playerCenterX = screenX + width / 2;
+    float playerCenterY = screenY + height / 2;
+    if(facingDirection == 1){
+        C2D_DrawTriangle(
+            playerCenterX + (width/2),  playerCenterY, C2D_Color32(255, 0, 0, 255),   // Top vertex (Red)
+            playerCenterX,  playerCenterY + 5.0f, C2D_Color32(0, 255, 0, 255),   // Bottom-left vertex (Green)
+            playerCenterX,  playerCenterY - 5.0f, C2D_Color32(0, 0, 255, 255),   // Bottom-right vertex (Blue)
+            0.5f                                           // Depth
+        );
+    }else{
+        C2D_DrawTriangle(
+            playerCenterX - (width/2),  playerCenterY, C2D_Color32(255, 0, 0, 255),   // Top vertex (Red)
+            playerCenterX,  playerCenterY + 5.0f, C2D_Color32(0, 255, 0, 255),   // Bottom-left vertex (Green)
+            playerCenterX,  playerCenterY - 5.0f, C2D_Color32(0, 0, 255, 255),   // Bottom-right vertex (Blue)
+            0.5f                                           // Depth
+        );
+        
+    }
+
 }
 
 void Player::onCollision(Entity& otherEntity) {

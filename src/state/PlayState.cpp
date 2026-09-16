@@ -6,6 +6,7 @@
 #include <3ds.h>
 #include "sprites.h"
 #include "world/RoomLoader.hpp"
+#include "core/InputMap.hpp"
 
 PlayState::PlayState(StateManager& stateManager) 
     : stateManager(stateManager) {
@@ -59,6 +60,18 @@ void PlayState::buildTestRoom() {
 Camera camera(400.0f, 240.0f); // Top screen resolution
 void PlayState::update() {
     u32 kDown = hidKeysDown();
+    u32 kHeld = hidKeysHeld();
+
+    float targetX = player.getX() + 8.0f;
+    float targetY = player.getY() + 8.0f;
+    float mapWidthPx = tilemap.getColumns() * 16.0f;
+    float mapHeightPx = tilemap.getRows() * 16.0f;
+
+    //look up and down if player is on the ground
+    if(kHeld & KEY_UP && player.getOnGround()) 
+        targetY -=90.0f;
+    if(kHeld & KEY_DOWN && player.getOnGround()) 
+        targetY +=90.0f; 
 
     if (kDown & KEY_START) {
         isPaused = !isPaused;
@@ -68,16 +81,14 @@ void PlayState::update() {
         pauseOverlay->update();
     } else {
         //scanner.update();
-        player.unlockAbility(Player::AbilityFlags::ABILITY_DOUBLE_JUMP);
         player.update(tilemap);
         camera.follow(
-        player.getX() + 8.0f, 
-        player.getY() + 8.0f, 
+        targetX, 
+        targetY, 
         0.1f, // Lerp factor
-        tilemap.getColumns() * 16.0f, 
-        tilemap.getRows() * 16.0f
-    );
-        //CollisionWorld::resolvePlayerCollisions(player, tilemap);
+        mapWidthPx, 
+        mapHeightPx
+        );
     }
 }
 
