@@ -3,6 +3,7 @@
 #include <3ds.h>
 #include <memory>
 
+
 #include "state/StateManager.hpp"
 #include "state/MenuState.hpp"
 #include "core/InputManager.hpp"

@@ -6,6 +6,8 @@
 #include "common/colors.hpp"
 #include "entities/Entity.hpp"
 #include "world/Tilemap.hpp"
+#include "AbilityManager.hpp"
+
 
 class Player : public Entity {
 public:
@@ -33,6 +35,14 @@ public:
         TransitioningRoom
     };
 
+    enum AbilityFlags : uint32_t {
+        ABILITY_NONE        = 0,
+        ABILITY_DASH        = 1 << 0, // 0001
+        ABILITY_DOUBLE_JUMP = 1 << 1, // 0010
+        ABILITY_WALL_JUMP   = 1 << 2, // 0100
+        ABILITY_CHARGING_VOID= 1 << 3  // 1000
+    };
+
     Player();
     ~Player() override = default;
 
@@ -44,7 +54,32 @@ public:
 
     // Helper method to check if a specific world point is solid
     bool isSolidTile(const Tilemap& tilemap, float worldX, float worldY) const;
+
+    PlayerState getState() { return currentState; }
+    float getXVelocity() const { return velocityX; }
+    float getYVelocity() const { return velocityY;}
+    
     void setState(PlayerState newState) { currentState = newState; }
+    void setXVelocity(float newVx) { velocityX = newVx; }
+    void setYVelocity(float newVy) { velocityY = newVy; }
+
+    // Helper methods for common impulse operations
+    void setVelocity(float newVx, float newVy) { velocityX = newVx; velocityY = newVy; }
+    void addYVelocity(float amount) { velocityY += amount; }
+    void addXVelocity(float amount) { velocityX += amount; }
+
+    //ability methods
+    void unlockAbility(AbilityFlags ability) {
+        unlockedAbilities |= ability;
+    }
+
+    void lockAbility(AbilityFlags ability) {
+        unlockedAbilities &= ~ability;
+    }
+
+    bool hasAbility(AbilityFlags ability) const {
+        return (unlockedAbilities & ability) != 0;
+    }
 
 private:
     u32 color;
@@ -55,4 +90,7 @@ private:
     float maxFallSpeed = 0.0f;
     float jumpCutMultiplier = 0.0f;
     PlayerState currentState = PlayerState::Idle;
+    uint32_t unlockedAbilities = ABILITY_NONE;
+    AbilityManager abilityManager;
+    bool hasDoubleJumped = false;
 };

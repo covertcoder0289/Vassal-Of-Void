@@ -2,6 +2,7 @@
 #include "GameState.hpp"
 #include "PauseState.hpp"
 #include "entities/player/Player.hpp"
+#include "entities/player/AbilityManager.hpp"
 #include "world/Tilemap.hpp"
 #include "core/Camera.hpp"
 #include <memory>

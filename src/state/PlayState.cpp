@@ -1,3 +1,4 @@
+//src/state/PlayState.cpp
 #include "PlayState.hpp"
 #include "MenuState.hpp"
 #include "StateManager.hpp"
@@ -67,6 +68,7 @@ void PlayState::update() {
         pauseOverlay->update();
     } else {
         //scanner.update();
+        player.unlockAbility(Player::AbilityFlags::ABILITY_DOUBLE_JUMP);
         player.update(tilemap);
         camera.follow(
         player.getX() + 8.0f, 

@@ -2,3 +2,7 @@ build/
 z/
 .vscode/
 /gfx/
+*.3dsx
+*.elf
+*.lst
+*.smdh

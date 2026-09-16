@@ -1,6 +1,7 @@
 //src/entities/player/Player.cpp
 #include "entities/player/Player.hpp"
 #include "core/InputMap.hpp"
+#include "entities/player/AbilityManager.hpp"
 
 #ifndef TOP_SCREEN_WIDTH
     #define TOP_SCREEN_WIDTH 400
@@ -40,6 +41,8 @@ Player::Player() {
     isOnGround = playerData.isOnGround;
     color = playerData.color;
     facingDirection = playerData.facingDirection;
+
+    
 }
 
 bool Player::isSolidTile(const Tilemap& tilemap, float worldX, float worldY) const {
@@ -49,22 +52,21 @@ bool Player::isSolidTile(const Tilemap& tilemap, float worldX, float worldY) con
 }
 
 void Player::update(const Tilemap& tilemap) {
+    //printf("state: %d\n",static_cast<int>(currentState));
+
     float moveX, moveY;
     InputMap::getMoveAxis(moveX, moveY);
 
     const float stickDeadZone = 0.2f;
     if((moveX < -stickDeadZone && moveX > -0.9f) || (moveX > stickDeadZone && moveX < 0.9f)) {
-        currentState = PlayerState::Walking;
+        if(isOnGround) currentState = PlayerState::Walking;  
         velocityX = moveX * moveSpeed;
-        printf("Player is walking with velocityX: %.2f\n", velocityX);
     }else if(moveX <= -0.9f || moveX >= 0.9f) {
-        currentState = PlayerState::Running;
+        if(isOnGround) currentState = PlayerState::Running;
         velocityX = moveX * runSpeed;
-        printf("Player is running with velocityX: %.2f\n", velocityX);
     }else {
-        currentState = PlayerState::Idle;
+        if(isOnGround) currentState = PlayerState::Idle;
         velocityX = 0.0f;
-        printf("Player is idle with velocityX: %.2f\n", velocityX);
     }
 
     if (moveX > stickDeadZone)      facingDirection = 1;
@@ -80,10 +82,24 @@ void Player::update(const Tilemap& tilemap) {
     // -------------------------------------------------------------
     // VERTICAL MOVEMENT & COLLISION RESOLUTION
     // -------------------------------------------------------------
-    if (isOnGround && InputMap::isActionDown(Action::Jump)) {
-        velocityY = jumpVelocity;
-        isOnGround = false;
+    if (InputMap::isActionDown(Action::Jump)) {
+
+        if(isOnGround){
+            velocityY = jumpVelocity;
+            isOnGround = false;
+            hasDoubleJumped = false;
+            currentState = PlayerState::Jumping;
+            //printf("Player is jumping with velocity of %f\n",velocityY);
+        }
+        else if((currentState == PlayerState::Jumping || currentState == PlayerState::Falling) && !hasDoubleJumped){
+                abilityManager.doubleJump(*this);
+                hasDoubleJumped = true;
+        }
+
     }
+
+
+
 
     if (!isOnGround && velocityY < 0.0f && InputMap::isActionUp(Action::Jump)) {
         velocityY *= jumpCutMultiplier;
@@ -98,7 +114,7 @@ void Player::update(const Tilemap& tilemap) {
         float footY = yPosition + height;
         float leftX = xPosition + 1.0f;         // 1px padding to avoid edge clipping
         float rightX = xPosition + width - 1.0f;
-
+        
         if (isSolidTile(tilemap, leftX, footY) || isSolidTile(tilemap, rightX, footY)) {
             // Find the top edge of the tile row we collided with
             int targetRow = tilemap.worldToRow(footY);
@@ -106,6 +122,7 @@ void Player::update(const Tilemap& tilemap) {
             currentState = PlayerState::Idle;
             velocityY = 0.0f;
             isOnGround = true;
+            hasDoubleJumped = false;
         }
     } 
     else if (velocityY < 0.0f) { // Moving Up (Jumping)
@@ -114,7 +131,7 @@ void Player::update(const Tilemap& tilemap) {
         float headY = yPosition;
         float leftX = xPosition + 1.0f;
         float rightX = xPosition + width - 1.0f;
-
+        //printf("State: %d\n",static_cast<int>(currentState));
         if (isSolidTile(tilemap, leftX, headY) || isSolidTile(tilemap, rightX, headY)) {
             // Push player below the tile bottom edge
             int targetRow = tilemap.worldToRow(headY);
