@@ -7,6 +7,7 @@
 #include "entities/Entity.hpp"
 #include "world/Tilemap.hpp"
 #include "AbilityManager.hpp"
+#include "AttackBox.hpp"
 
 
 class Player : public Entity {
@@ -25,7 +26,7 @@ public:
         Knockback,
         Dashing,
         WallContact,
-        WallSlide,
+        WallSliding,
         WallJump,
         Dead,
         Healing,
@@ -58,10 +59,17 @@ public:
     PlayerState getState() { return currentState; }
     float getXVelocity() const { return velocityX; }
     float getYVelocity() const { return velocityY;}
+    int getFacingDirection() const { return facingDirection; }
+    float getWidth() const { return width; }
+    float getHeight() const { return height; }
+    float getJumpVelocity() const { return jumpVelocity; }
+    bool getHasDoubleJumped() const { return hasDoubleJumped; }
     
     void setState(PlayerState newState) { currentState = newState; }
     void setXVelocity(float newVx) { velocityX = newVx; }
     void setYVelocity(float newVy) { velocityY = newVy; }
+    void setHorizontalInputLockCounter(int frames) { horizontalInputLockCounter = frames; }
+    void setHasDoubleJumped(bool value) { hasDoubleJumped = value; }
 
     // Helper methods for common impulse operations
     void setVelocity(float newVx, float newVy) { velocityX = newVx; velocityY = newVy; }
@@ -92,5 +100,7 @@ private:
     PlayerState currentState = PlayerState::Idle;
     uint32_t unlockedAbilities = ABILITY_NONE;
     AbilityManager abilityManager;
+    AttackBox attackBox;
     bool hasDoubleJumped = false;
+    int horizontalInputLockCounter = 0; // Counter to lock horizontal input for a few frames after wall jump
 };

@@ -15,11 +15,11 @@ namespace {
         float height = 32.0f;
         float xPosition = (TOP_SCREEN_WIDTH - 16.0f) * 0.5f;
         float yPosition = (TOP_SCREEN_HEIGHT - 16.0f) * 0.5f;
-        float moveSpeed = 3.0f;
+        float moveSpeed = 2.0f;
         float runSpeed = 4.0f;
         float gravity = 0.45f;
         float jumpVelocity = -8.5f;
-        float maxFallSpeed = 6.0f;//6
+        float maxFallSpeed = 4.0f;//6
         float jumpCutMultiplier = 0.5f;
         bool isOnGround = false;
         u32 color = Colors::white;
@@ -27,7 +27,7 @@ namespace {
     } playerData;
 }
 
-Player::Player() {
+Player::Player() : attackBox(*this) {
     width = playerData.width;
     height = playerData.height;
     xPosition = playerData.xPosition;
@@ -52,22 +52,28 @@ bool Player::isSolidTile(const Tilemap& tilemap, float worldX, float worldY) con
 }
 
 void Player::update(const Tilemap& tilemap) {
-    //printf("state: %d\n",static_cast<int>(currentState));
-
+    if(horizontalInputLockCounter > 0)
+        horizontalInputLockCounter--;
+        // Attack Trigger
+    if (InputMap::isActionDown(Action::Attack)) {
+        currentState = PlayerState::Attacking;
+        attackBox.lightAttack();   
+    }
     float moveX, moveY;
     InputMap::getMoveAxis(moveX, moveY);
 
     const float stickDeadZone = 0.2f;
-    if((moveX < -stickDeadZone && moveX > -0.9f) || (moveX > stickDeadZone && moveX < 0.9f)) {
+    if(horizontalInputLockCounter == 0 && ((moveX < -stickDeadZone && moveX >= -1.0f) || (moveX > stickDeadZone && moveX <= 1.0f))) {
         if(isOnGround) currentState = PlayerState::Walking;  
         velocityX = moveX * moveSpeed;
-    }else if(moveX <= -0.9f || moveX >= 0.9f) {
-        if(isOnGround) currentState = PlayerState::Running;
-        velocityX = moveX * runSpeed;
-    }else {
-        if(isOnGround) currentState = PlayerState::Idle;
+    }else if(isOnGround){
+        currentState = PlayerState::Idle;
         velocityX = 0.0f;
     }
+    // else if(moveX <= -0.9f || moveX >= 0.9f) {
+    //     if(isOnGround) currentState = PlayerState::Running;
+    //     velocityX = moveX * runSpeed;
+    // }
 
     if (moveX > stickDeadZone) facingDirection = 1;
     else if (moveX < -stickDeadZone) facingDirection = -1;
@@ -91,9 +97,10 @@ void Player::update(const Tilemap& tilemap) {
             currentState = PlayerState::Jumping;
             //printf("Player is jumping with velocity of %f\n",velocityY);
         }
-        else if((currentState == PlayerState::Jumping || currentState == PlayerState::Falling) && !hasDoubleJumped){
-                abilityManager.doubleJump(*this);
-                hasDoubleJumped = true;
+        else if((currentState == PlayerState::Jumping || currentState == PlayerState::Falling)){
+            abilityManager.doubleJump(*this);
+        }else if(currentState == PlayerState::WallSliding){
+            abilityManager.wallJump(*this);
         }
 
     }
@@ -131,7 +138,6 @@ void Player::update(const Tilemap& tilemap) {
         float headY = yPosition;
         float leftX = xPosition + 1.0f;
         float rightX = xPosition + width - 1.0f;
-        //printf("State: %d\n",static_cast<int>(currentState));
         if (isSolidTile(tilemap, leftX, headY) || isSolidTile(tilemap, rightX, headY)) {
             // Push player below the tile bottom edge
             int targetRow = tilemap.worldToRow(headY);
@@ -154,6 +160,12 @@ void Player::update(const Tilemap& tilemap) {
             int targetCol = tilemap.worldToCol(rightX);
             xPosition = (targetCol * Tilemap::TILE_SIZE) - width;
             velocityX = 0.0f;
+            printf("Player is colliding with wall\n");
+
+            if(!isOnGround){
+                currentState = PlayerState::WallSliding;
+                velocityY *= 0.1f;
+            }
         }
     } 
     else if (velocityX < 0.0f) { // Moving Left
@@ -165,8 +177,15 @@ void Player::update(const Tilemap& tilemap) {
             int targetCol = tilemap.worldToCol(leftX);
             xPosition = (targetCol + 1) * Tilemap::TILE_SIZE;
             velocityX = 0.0f;
+
+            if(!isOnGround){
+                currentState = PlayerState::WallSliding;
+                velocityY *= 0.1f;
+            }
         }
     }
+
+attackBox.update();
 }
 void Player::update() {
 // Left empty on purpose to satisfy linker. Can be used when updating without tilemap context
@@ -197,6 +216,9 @@ void Player::draw(float cameraX, float cameraY) const {
         
     }
 
+
+        attackBox.draw(cameraX, cameraY);
+    
 }
 
 void Player::onCollision(Entity& otherEntity) {
