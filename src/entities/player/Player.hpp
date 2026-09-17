@@ -70,6 +70,7 @@ public:
     void setYVelocity(float newVy) { velocityY = newVy; }
     void setHorizontalInputLockCounter(int frames) { horizontalInputLockCounter = frames; }
     void setHasDoubleJumped(bool value) { hasDoubleJumped = value; }
+    void setDashCooldownCounter(int frames) { dashCooldownCounter = frames; }
 
     // Helper methods for common impulse operations
     void setVelocity(float newVx, float newVy) { velocityX = newVx; velocityY = newVy; }
@@ -103,4 +104,5 @@ private:
     AttackBox attackBox;
     bool hasDoubleJumped = false;
     int horizontalInputLockCounter = 0; // Counter to lock horizontal input for a few frames after wall jump
+    int dashCooldownCounter = 0; // Counter to manage dash cooldown
 };

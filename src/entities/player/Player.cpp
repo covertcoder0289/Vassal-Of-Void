@@ -52,23 +52,38 @@ bool Player::isSolidTile(const Tilemap& tilemap, float worldX, float worldY) con
 }
 
 void Player::update(const Tilemap& tilemap) {
-    if(horizontalInputLockCounter > 0)
-        horizontalInputLockCounter--;
         // Attack Trigger
-    if (InputMap::isActionDown(Action::Attack)) {
+    if (InputMap::isActionDown(Action::Attack)) 
+    {
         currentState = PlayerState::Attacking;
         attackBox.lightAttack();   
     }
     float moveX, moveY;
+
+    if(InputMap::isActionDown(Action::Dash))
+    {
+        if(dashCooldownCounter == 0)
+            abilityManager.dash(*this);
+    }
+    if(dashCooldownCounter > 0)
+        dashCooldownCounter--;
+        
     InputMap::getMoveAxis(moveX, moveY);
 
     const float stickDeadZone = 0.2f;
-    if(horizontalInputLockCounter == 0 && ((moveX < -stickDeadZone && moveX >= -1.0f) || (moveX > stickDeadZone && moveX <= 1.0f))) {
-        if(isOnGround) currentState = PlayerState::Walking;  
-        velocityX = moveX * moveSpeed;
-    }else if(isOnGround){
-        currentState = PlayerState::Idle;
-        velocityX = 0.0f;
+
+    if(horizontalInputLockCounter == 0)
+    {
+        if((moveX < -stickDeadZone && moveX >= -1.0f) || (moveX > stickDeadZone && moveX <= 1.0f)) 
+        {
+            if(isOnGround) currentState = PlayerState::Walking;  
+
+            velocityX = moveX * moveSpeed;
+        }else
+            {
+               if(isOnGround) currentState = PlayerState::Idle;
+                velocityX = 0.0f;
+            }
     }
     // else if(moveX <= -0.9f || moveX >= 0.9f) {
     //     if(isOnGround) currentState = PlayerState::Running;
@@ -104,7 +119,8 @@ void Player::update(const Tilemap& tilemap) {
         }
 
     }
-
+    if(horizontalInputLockCounter > 0)
+        horizontalInputLockCounter--;
 
 
 
@@ -160,7 +176,6 @@ void Player::update(const Tilemap& tilemap) {
             int targetCol = tilemap.worldToCol(rightX);
             xPosition = (targetCol * Tilemap::TILE_SIZE) - width;
             velocityX = 0.0f;
-            printf("Player is colliding with wall\n");
 
             if(!isOnGround){
                 currentState = PlayerState::WallSliding;
