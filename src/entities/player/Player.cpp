@@ -11,14 +11,14 @@
 // Anonymous namespace keeps playerData internal to Player.cpp
 namespace {
     struct {
-        float width = 16.0f;
+        float width = 32.0f;
         float height = 32.0f;
-        float xPosition = (TOP_SCREEN_WIDTH - 16.0f) * 0.5f;
-        float yPosition = (TOP_SCREEN_HEIGHT - 16.0f) * 0.5f;
+        float xPosition = (TOP_SCREEN_WIDTH - 32.0f) * 0.5f;
+        float yPosition = (TOP_SCREEN_HEIGHT - 32.0f) * 0.5f;
         float moveSpeed = 2.0f;
         float runSpeed = 4.0f;
-        float gravity = 0.45f;
-        float jumpVelocity = -8.5f;
+        float gravity = 0.43f;//0.45f
+        float jumpVelocity = -8.8f;
         float maxFallSpeed = 4.0f;//6
         float jumpCutMultiplier = 0.5f;
         bool isOnGround = false;
@@ -67,7 +67,7 @@ void Player::update(const Tilemap& tilemap) {
     }
     if(dashCooldownCounter > 0)
         dashCooldownCounter--;
-        
+
     InputMap::getMoveAxis(moveX, moveY);
 
     const float stickDeadZone = 0.2f;
@@ -84,6 +84,15 @@ void Player::update(const Tilemap& tilemap) {
                if(isOnGround) currentState = PlayerState::Idle;
                 velocityX = 0.0f;
             }
+    }
+
+        if (currentState == PlayerState::Idle)
+    {
+        idleAnimation.update();
+    }
+    else
+    {
+        idleAnimation.reset();
     }
     // else if(moveX <= -0.9f || moveX >= 0.9f) {
     //     if(isOnGround) currentState = PlayerState::Running;
@@ -210,32 +219,48 @@ void Player::draw(float cameraX, float cameraY) const {
     float screenX = xPosition - cameraX;
     float screenY = yPosition - cameraY;
     //u32 debugColor = isOnGround ? C2D_Color32(0,255,0,255) : color;
-    C2D_DrawRectSolid(screenX, screenY, 0.5f, width, height, color);
+    C2D_DrawParams params = {
+        .pos = {
+            screenX,
+            screenY,
+            (facingDirection > 0) ? width : -width,
+            height
+        },
+        .center = {
+            0.0f,
+            0.0f
+        },
+        .depth = 0.5f,
+        .angle = 0.0f
+    };
 
-    float playerCenterX = screenX + width / 2;
-    float playerCenterY = screenY + height / 2;
-    if(facingDirection == 1){
-        C2D_DrawTriangle(
-            playerCenterX + (width/2),  playerCenterY, C2D_Color32(255, 0, 0, 255),   // Top vertex (Red)
-            playerCenterX,  playerCenterY + 5.0f, C2D_Color32(0, 255, 0, 255),   // Bottom-left vertex (Green)
-            playerCenterX,  playerCenterY - 5.0f, C2D_Color32(0, 0, 255, 255),   // Bottom-right vertex (Blue)
-            0.5f                                           // Depth
-        );
-    }else{
-        C2D_DrawTriangle(
-            playerCenterX - (width/2),  playerCenterY, C2D_Color32(255, 0, 0, 255),   // Top vertex (Red)
-            playerCenterX,  playerCenterY + 5.0f, C2D_Color32(0, 255, 0, 255),   // Bottom-left vertex (Green)
-            playerCenterX,  playerCenterY - 5.0f, C2D_Color32(0, 0, 255, 255),   // Bottom-right vertex (Blue)
-            0.5f                                           // Depth
-        );
-        
+    C2D_Image spriteToDraw;
+
+    if (currentState == PlayerState::Idle)
+    {
+        spriteToDraw = idleAnimation.getCurrentFrame();
+    }
+    else
+    {
+        spriteToDraw = playerSprite;
     }
 
+    C2D_DrawImage(spriteToDraw, &params);
 
-        attackBox.draw(cameraX, cameraY);
+    attackBox.draw(cameraX, cameraY);
     
 }
 
 void Player::onCollision(Entity& otherEntity) {
     // Collision logic goes here
+}
+
+void Player::setIdleAnimation(C2D_Image spriteSheet, int frameCount)
+{
+    idleAnimation.setSpriteSheet(
+        spriteSheet,
+        32,
+        32,
+        frameCount
+    );
 }

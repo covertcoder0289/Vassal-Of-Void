@@ -8,6 +8,7 @@
 #include "world/Tilemap.hpp"
 #include "AbilityManager.hpp"
 #include "AttackBox.hpp"
+#include "graphics/Animation.hpp"
 
 
 class Player : public Entity {
@@ -71,7 +72,8 @@ public:
     void setHorizontalInputLockCounter(int frames) { horizontalInputLockCounter = frames; }
     void setHasDoubleJumped(bool value) { hasDoubleJumped = value; }
     void setDashCooldownCounter(int frames) { dashCooldownCounter = frames; }
-
+    void setSprite(C2D_Image newSprite) { playerSprite = newSprite; }
+    void setIdleAnimation(C2D_Image spriteSheet, int frameCount);
     // Helper methods for common impulse operations
     void setVelocity(float newVx, float newVy) { velocityX = newVx; velocityY = newVy; }
     void addYVelocity(float amount) { velocityY += amount; }
@@ -105,4 +107,6 @@ private:
     bool hasDoubleJumped = false;
     int horizontalInputLockCounter = 0; // Counter to lock horizontal input for a few frames after wall jump
     int dashCooldownCounter = 0; // Counter to manage dash cooldown
+    C2D_Image playerSprite;
+    Animation idleAnimation;
 };

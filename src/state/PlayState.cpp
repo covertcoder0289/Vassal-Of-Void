@@ -29,10 +29,28 @@ bool PlayState::init() {
     }
 
     // Retrieve the image handle for your custom 16x16 block
-    blockTileImage = C2D_SpriteSheetGetImage(spriteSheet, sprites_idx);
-
+    blockTileImage = C2D_SpriteSheetGetImage(spriteSheet, sprites_test_room_block_idx);
     // Pass the tile image handle to the tilemap so it knows what to render
     tilemap.setTileTexture(blockTileImage);
+C2D_Image idleSheet =
+    C2D_SpriteSheetGetImage(
+        spriteSheet,
+        sprites_idle_spritesheet_idx
+    );
+    printf(
+    "Idle: width=%u height=%u "
+    "left=%f top=%f right=%f bottom=%f\n",
+    idleSheet.subtex->width,
+    idleSheet.subtex->height,
+    idleSheet.subtex->left,
+    idleSheet.subtex->top,
+    idleSheet.subtex->right,
+    idleSheet.subtex->bottom
+);
+
+player.setIdleAnimation(idleSheet, 9);
+    C2D_Image playerSprite = C2D_SpriteSheetGetImage(spriteSheet, sprites_Sprite_0008_idx);
+    player.setSprite(playerSprite);
 
     return true;
 }
