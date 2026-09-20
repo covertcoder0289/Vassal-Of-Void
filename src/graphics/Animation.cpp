@@ -6,7 +6,7 @@ Animation::Animation()
       frameCount(0),
       currentFrame(0),
       frameTimer(0),
-      frameDuration(6)
+      frameDuration(8)
 {
 }
 
@@ -28,14 +28,6 @@ void Animation::setSpriteSheet(
 
     subTexture.width = width;
     subTexture.height = height;
-
-printf(
-    "Idle sheet: left=%d top=%d right=%d bottom=%d\n",
-    spriteSheet.subtex->left,
-    spriteSheet.subtex->top,
-    spriteSheet.subtex->right,
-    spriteSheet.subtex->bottom
-);
 }
 
 void Animation::update()
@@ -85,4 +77,9 @@ C2D_Image Animation::getCurrentFrame() const
         spriteSheet.tex,
         &subTexture
     };
+}
+
+void Animation::setFrameDuration(int duration)
+{
+    frameDuration = duration;
 }

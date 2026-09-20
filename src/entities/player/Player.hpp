@@ -72,8 +72,10 @@ public:
     void setHorizontalInputLockCounter(int frames) { horizontalInputLockCounter = frames; }
     void setHasDoubleJumped(bool value) { hasDoubleJumped = value; }
     void setDashCooldownCounter(int frames) { dashCooldownCounter = frames; }
+    void setDashDurationCounter(int frames) { dashDurationCounter = frames; }
     void setSprite(C2D_Image newSprite) { playerSprite = newSprite; }
     void setIdleAnimation(C2D_Image spriteSheet, int frameCount);
+    void setDashAnimation(C2D_Image spriteSheet, int frameCount);
     // Helper methods for common impulse operations
     void setVelocity(float newVx, float newVy) { velocityX = newVx; velocityY = newVy; }
     void addYVelocity(float amount) { velocityY += amount; }
@@ -109,4 +111,6 @@ private:
     int dashCooldownCounter = 0; // Counter to manage dash cooldown
     C2D_Image playerSprite;
     Animation idleAnimation;
+    Animation dashAnimation;
+    int dashDurationCounter = 0; // Counter to manage dash duration
 };

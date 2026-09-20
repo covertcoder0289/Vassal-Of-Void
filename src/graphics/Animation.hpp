@@ -18,6 +18,8 @@ public:
     void update();
     void reset();
 
+    void setFrameDuration(int duration);
+
     C2D_Image getCurrentFrame() const;
 
 private:

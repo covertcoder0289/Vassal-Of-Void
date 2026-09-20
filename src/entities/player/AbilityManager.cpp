@@ -26,8 +26,9 @@ void AbilityManager::wallJump(Player& player){
 void AbilityManager::dash(Player& player){
     if(player.getState() != Player::PlayerState::Dashing){
         player.setState(Player::PlayerState::Dashing);
-        player.setHorizontalInputLockCounter(8); // Lock horizontal input for 20 frames
-        player.setVelocityX(player.getFacingDirection() * 20.0f); // Dash speed
+        player.setDashDurationCounter(54); // Dash lasts for 50 frames
+        player.setHorizontalInputLockCounter(8); // Lock horizontal input for 8 frames
+        player.setVelocityX(player.getFacingDirection() * 10.0f); // Dash speed
         player.setDashCooldownCounter(120); // Set cooldown for 120 frames
     }
 }

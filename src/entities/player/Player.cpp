@@ -1,4 +1,5 @@
-//src/entities/player/Player.cpp
+// src/entities/player/Player.cpp
+
 #include "entities/player/Player.hpp"
 #include "core/InputMap.hpp"
 #include "entities/player/AbilityManager.hpp"
@@ -9,84 +10,309 @@
 #endif
 
 // Anonymous namespace keeps playerData internal to Player.cpp
-namespace {
-    struct {
+namespace
+{
+    struct
+    {
         float width = 32.0f;
         float height = 32.0f;
+
         float xPosition = (TOP_SCREEN_WIDTH - 32.0f) * 0.5f;
         float yPosition = (TOP_SCREEN_HEIGHT - 32.0f) * 0.5f;
+
         float moveSpeed = 2.0f;
         float runSpeed = 4.0f;
-        float gravity = 0.43f;//0.45f
+
+        float gravity = 0.43f;
         float jumpVelocity = -8.8f;
-        float maxFallSpeed = 4.0f;//6
+        float maxFallSpeed = 4.0f;
         float jumpCutMultiplier = 0.5f;
+
         bool isOnGround = false;
+
         u32 color = Colors::white;
+
         int facingDirection = 1;
+
     } playerData;
 }
 
-Player::Player() : attackBox(*this) {
+
+// =============================================================
+// CONSTRUCTOR
+// =============================================================
+
+Player::Player() : attackBox(*this)
+{
     width = playerData.width;
     height = playerData.height;
+
     xPosition = playerData.xPosition;
     yPosition = playerData.yPosition;
+
     moveSpeed = playerData.moveSpeed;
     runSpeed = playerData.runSpeed;
+
     gravity = playerData.gravity;
     jumpVelocity = playerData.jumpVelocity;
     maxFallSpeed = playerData.maxFallSpeed;
-    jumpCutMultiplier = playerData.jumpCutMultiplier; // Fixed comma to semicolon
+    jumpCutMultiplier = playerData.jumpCutMultiplier;
+
     isOnGround = playerData.isOnGround;
+
     color = playerData.color;
+
     facingDirection = playerData.facingDirection;
-
-    
 }
 
-bool Player::isSolidTile(const Tilemap& tilemap, float worldX, float worldY) const {
+
+// =============================================================
+// TILE COLLISION
+// =============================================================
+
+bool Player::isSolidTile(
+    const Tilemap& tilemap,
+    float worldX,
+    float worldY
+) const
+{
     int tileType = tilemap.getTileAtPosition(worldX, worldY);
-    // Consider both GROUND (1) and PLATFORM (2) as solid collisions
-    return tileType == TileType::GROUND || tileType == TileType::PLATFORM;
+
+    return tileType == TileType::GROUND ||
+           tileType == TileType::PLATFORM;
 }
 
-void Player::update(const Tilemap& tilemap) {
-        // Attack Trigger
-    if (InputMap::isActionDown(Action::Attack)) 
-    {
-        currentState = PlayerState::Attacking;
-        attackBox.lightAttack();   
-    }
-    float moveX, moveY;
 
-    if(InputMap::isActionDown(Action::Dash))
-    {
-        if(dashCooldownCounter == 0)
-            abilityManager.dash(*this);
-    }
-    if(dashCooldownCounter > 0)
-        dashCooldownCounter--;
+// =============================================================
+// UPDATE
+// =============================================================
+
+void Player::update(const Tilemap& tilemap)
+{
+    // ---------------------------------------------------------
+    // INPUT
+    // ---------------------------------------------------------
+
+    float moveX;
+    float moveY;
 
     InputMap::getMoveAxis(moveX, moveY);
 
     const float stickDeadZone = 0.2f;
 
-    if(horizontalInputLockCounter == 0)
-    {
-        if((moveX < -stickDeadZone && moveX >= -1.0f) || (moveX > stickDeadZone && moveX <= 1.0f)) 
-        {
-            if(isOnGround) currentState = PlayerState::Walking;  
 
-            velocityX = moveX * moveSpeed;
-        }else
-            {
-               if(isOnGround) currentState = PlayerState::Idle;
-                velocityX = 0.0f;
-            }
+    // ---------------------------------------------------------
+    // UPDATE FACING DIRECTION
+    // ---------------------------------------------------------
+
+    if (moveX > stickDeadZone)
+    {
+        facingDirection = 1;
+    }
+    else if (moveX < -stickDeadZone)
+    {
+        facingDirection = -1;
     }
 
-        if (currentState == PlayerState::Idle)
+
+    // ---------------------------------------------------------
+    // ATTACK
+    // ---------------------------------------------------------
+
+    if (InputMap::isActionDown(Action::Attack))
+    {
+        currentState = PlayerState::Attacking;
+
+        attackBox.lightAttack();
+    }
+
+
+    // ---------------------------------------------------------
+    // DASH INPUT
+    // ---------------------------------------------------------
+
+    if (InputMap::isActionDown(Action::Dash))
+    {
+        if (dashCooldownCounter == 0)
+        {
+            abilityManager.dash(*this);
+        }
+    }
+
+
+    // ---------------------------------------------------------
+    // DASH COOLDOWN
+    // ---------------------------------------------------------
+
+    if (dashCooldownCounter > 0)
+    {
+        dashCooldownCounter--;
+    }
+
+
+    // =========================================================
+    // DASHING
+    // =========================================================
+    //
+    // Dashing is handled separately from normal movement.
+    //
+    // This is important because the normal movement code below
+    // can otherwise change:
+    //
+    //      Dashing -> Falling
+    //      Dashing -> Jumping
+    //      Dashing -> WallSliding
+    //
+    // before the dash animation gets a chance to play.
+    //
+    // =========================================================
+
+    if (currentState == PlayerState::Dashing)
+    {
+        // Update dash animation
+        dashAnimation.update();
+
+
+        // Count down dash duration
+        if (dashDurationCounter > 0)
+        {
+            dashDurationCounter--;
+        }
+
+
+        // -----------------------------------------------------
+        // Move horizontally during dash
+        // -----------------------------------------------------
+
+        xPosition += velocityX;
+
+
+        // -----------------------------------------------------
+        // Dash collision - moving right
+        // -----------------------------------------------------
+
+        if (velocityX > 0.0f)
+        {
+            float rightX = xPosition + width;
+
+            float topY = yPosition + 1.0f;
+            float bottomY = yPosition + height - 1.0f;
+
+            if (
+                isSolidTile(tilemap, rightX, topY) ||
+                isSolidTile(tilemap, rightX, bottomY)
+            )
+            {
+                int targetCol = tilemap.worldToCol(rightX);
+
+                xPosition =
+                    (targetCol * Tilemap::TILE_SIZE) - width;
+
+                velocityX = 0.0f;
+
+                // Stop the dash when hitting a wall
+                dashDurationCounter = 0;
+            }
+        }
+
+
+        // -----------------------------------------------------
+        // Dash collision - moving left
+        // -----------------------------------------------------
+
+        else if (velocityX < 0.0f)
+        {
+            float leftX = xPosition;
+
+            float topY = yPosition + 1.0f;
+            float bottomY = yPosition + height - 1.0f;
+
+            if (
+                isSolidTile(tilemap, leftX, topY) ||
+                isSolidTile(tilemap, leftX, bottomY)
+            )
+            {
+                int targetCol = tilemap.worldToCol(leftX);
+
+                xPosition =
+                    (targetCol + 1) * Tilemap::TILE_SIZE;
+
+                velocityX = 0.0f;
+
+                // Stop the dash when hitting a wall
+                dashDurationCounter = 0;
+            }
+        }
+
+
+        // -----------------------------------------------------
+        // End dash
+        // -----------------------------------------------------
+
+        if (dashDurationCounter == 0)
+        {
+            currentState = PlayerState::Falling;
+
+            velocityX = 0.0f;
+        }
+
+
+        // Attack box still needs updating
+        attackBox.update();
+
+
+        // IMPORTANT:
+        //
+        // Don't run normal gravity/jump/falling code this frame.
+        //
+        return;
+    }
+
+
+    // =========================================================
+    // NOT DASHING
+    // =========================================================
+
+    // Dash animation should return to frame 0 when we're not
+    // dashing.
+    dashAnimation.reset();
+
+
+    // ---------------------------------------------------------
+    // NORMAL HORIZONTAL MOVEMENT
+    // ---------------------------------------------------------
+
+    if (horizontalInputLockCounter == 0)
+    {
+        if (
+            (moveX < -stickDeadZone && moveX >= -1.0f) ||
+            (moveX > stickDeadZone && moveX <= 1.0f)
+        )
+        {
+            if (isOnGround)
+            {
+                currentState = PlayerState::Walking;
+            }
+
+            velocityX = moveX * moveSpeed;
+        }
+        else
+        {
+            if (isOnGround)
+            {
+                currentState = PlayerState::Idle;
+            }
+
+            velocityX = 0.0f;
+        }
+    }
+
+
+    // ---------------------------------------------------------
+    // IDLE ANIMATION
+    // ---------------------------------------------------------
+
+    if (currentState == PlayerState::Idle)
     {
         idleAnimation.update();
     }
@@ -94,168 +320,339 @@ void Player::update(const Tilemap& tilemap) {
     {
         idleAnimation.reset();
     }
-    // else if(moveX <= -0.9f || moveX >= 0.9f) {
-    //     if(isOnGround) currentState = PlayerState::Running;
-    //     velocityX = moveX * runSpeed;
-    // }
 
-    if (moveX > stickDeadZone) facingDirection = 1;
-    else if (moveX < -stickDeadZone) facingDirection = -1;
-    // else: keep last facing — don't reset to a default on release
 
-    // Apply Gravity
+    // ---------------------------------------------------------
+    // HORIZONTAL INPUT LOCK
+    // ---------------------------------------------------------
+
+    if (horizontalInputLockCounter > 0)
+    {
+        horizontalInputLockCounter--;
+    }
+
+
+    // =========================================================
+    // GRAVITY
+    // =========================================================
+
     velocityY += gravity;
-    if (velocityY > maxFallSpeed) {
+
+    if (velocityY > maxFallSpeed)
+    {
         velocityY = maxFallSpeed;
     }
 
-    // -------------------------------------------------------------
-    // VERTICAL MOVEMENT & COLLISION RESOLUTION
-    // -------------------------------------------------------------
-    if (InputMap::isActionDown(Action::Jump)) {
 
-        if(isOnGround){
+    // =========================================================
+    // JUMP INPUT
+    // =========================================================
+
+    if (InputMap::isActionDown(Action::Jump))
+    {
+        if (isOnGround)
+        {
             velocityY = jumpVelocity;
+
             isOnGround = false;
+
             hasDoubleJumped = false;
+
             currentState = PlayerState::Jumping;
-            //printf("Player is jumping with velocity of %f\n",velocityY);
         }
-        else if((currentState == PlayerState::Jumping || currentState == PlayerState::Falling)){
+        else if (
+            currentState == PlayerState::Jumping ||
+            currentState == PlayerState::Falling
+        )
+        {
             abilityManager.doubleJump(*this);
-        }else if(currentState == PlayerState::WallSliding){
+        }
+        else if (currentState == PlayerState::WallSliding)
+        {
             abilityManager.wallJump(*this);
         }
-
     }
-    if(horizontalInputLockCounter > 0)
-        horizontalInputLockCounter--;
 
 
+    // =========================================================
+    // VARIABLE JUMP HEIGHT
+    // =========================================================
 
-    if (!isOnGround && velocityY < 0.0f && InputMap::isActionUp(Action::Jump)) {
+    if (
+        !isOnGround &&
+        velocityY < 0.0f &&
+        InputMap::isActionUp(Action::Jump)
+    )
+    {
         velocityY *= jumpCutMultiplier;
     }
 
+
+    // =========================================================
+    // VERTICAL MOVEMENT
+    // =========================================================
+
     yPosition += velocityY;
+
     isOnGround = false;
 
-    if (velocityY > 0.0f) { // Moving Down (Falling)
-        // Sample bottom-left and bottom-right corners of player box
+
+    // ---------------------------------------------------------
+    // FALLING
+    // ---------------------------------------------------------
+
+    if (velocityY > 0.0f)
+    {
         currentState = PlayerState::Falling;
+
         float footY = yPosition + height;
-        float leftX = xPosition + 1.0f;         // 1px padding to avoid edge clipping
-        float rightX = xPosition + width - 1.0f;
-        
-        if (isSolidTile(tilemap, leftX, footY) || isSolidTile(tilemap, rightX, footY)) {
-            // Find the top edge of the tile row we collided with
-            int targetRow = tilemap.worldToRow(footY);
-            yPosition = (targetRow * Tilemap::TILE_SIZE) - height;
-            currentState = PlayerState::Idle;
-            velocityY = 0.0f;
-            isOnGround = true;
-            hasDoubleJumped = false;
-        }
-    } 
-    else if (velocityY < 0.0f) { // Moving Up (Jumping)
-        // Sample top-left and top-right corners
-        currentState = PlayerState::Jumping;
-        float headY = yPosition;
+
         float leftX = xPosition + 1.0f;
         float rightX = xPosition + width - 1.0f;
-        if (isSolidTile(tilemap, leftX, headY) || isSolidTile(tilemap, rightX, headY)) {
-            // Push player below the tile bottom edge
+
+        if (
+            isSolidTile(tilemap, leftX, footY) ||
+            isSolidTile(tilemap, rightX, footY)
+        )
+        {
+            int targetRow = tilemap.worldToRow(footY);
+
+            yPosition =
+                (targetRow * Tilemap::TILE_SIZE) - height;
+
+            currentState = PlayerState::Idle;
+
+            velocityY = 0.0f;
+
+            isOnGround = true;
+
+            hasDoubleJumped = false;
+        }
+    }
+
+
+    // ---------------------------------------------------------
+    // JUMPING
+    // ---------------------------------------------------------
+
+    else if (velocityY < 0.0f)
+    {
+        currentState = PlayerState::Jumping;
+
+        float headY = yPosition;
+
+        float leftX = xPosition + 1.0f;
+        float rightX = xPosition + width - 1.0f;
+
+        if (
+            isSolidTile(tilemap, leftX, headY) ||
+            isSolidTile(tilemap, rightX, headY)
+        )
+        {
             int targetRow = tilemap.worldToRow(headY);
-            yPosition = (targetRow + 1) * Tilemap::TILE_SIZE;
+
+            yPosition =
+                (targetRow + 1) * Tilemap::TILE_SIZE;
+
             velocityY = 0.0f;
         }
     }
 
-    // -------------------------------------------------------------
-    // HORIZONTAL MOVEMENT & COLLISION RESOLUTION
-    // -------------------------------------------------------------
+
+    // =========================================================
+    // HORIZONTAL MOVEMENT
+    // =========================================================
+
     xPosition += velocityX;
 
-    if (velocityX > 0.0f) { // Moving Right
+
+    // ---------------------------------------------------------
+    // MOVING RIGHT
+    // ---------------------------------------------------------
+
+    if (velocityX > 0.0f)
+    {
         float rightX = xPosition + width;
+
         float topY = yPosition + 1.0f;
         float bottomY = yPosition + height - 1.0f;
-        
-        if (isSolidTile(tilemap, rightX, topY) || isSolidTile(tilemap, rightX, bottomY)) {
+
+        if (
+            isSolidTile(tilemap, rightX, topY) ||
+            isSolidTile(tilemap, rightX, bottomY)
+        )
+        {
             int targetCol = tilemap.worldToCol(rightX);
-            xPosition = (targetCol * Tilemap::TILE_SIZE) - width;
+
+            xPosition =
+                (targetCol * Tilemap::TILE_SIZE) - width;
+
             velocityX = 0.0f;
 
-            if(!isOnGround){
+            if (!isOnGround)
+            {
                 currentState = PlayerState::WallSliding;
-                velocityY *= 0.1f;
-            }
-        }
-    } 
-    else if (velocityX < 0.0f) { // Moving Left
-        float leftX = xPosition;
-        float topY = yPosition + 1.0f;
-        float bottomY = yPosition + height - 1.0f;
 
-        if (isSolidTile(tilemap, leftX, topY) || isSolidTile(tilemap, leftX, bottomY)) {
-            int targetCol = tilemap.worldToCol(leftX);
-            xPosition = (targetCol + 1) * Tilemap::TILE_SIZE;
-            velocityX = 0.0f;
-
-            if(!isOnGround){
-                currentState = PlayerState::WallSliding;
                 velocityY *= 0.1f;
             }
         }
     }
 
-attackBox.update();
-}
-void Player::update() {
-// Left empty on purpose to satisfy linker. Can be used when updating without tilemap context
+
+    // ---------------------------------------------------------
+    // MOVING LEFT
+    // ---------------------------------------------------------
+
+    else if (velocityX < 0.0f)
+    {
+        float leftX = xPosition;
+
+        float topY = yPosition + 1.0f;
+        float bottomY = yPosition + height - 1.0f;
+
+        if (
+            isSolidTile(tilemap, leftX, topY) ||
+            isSolidTile(tilemap, leftX, bottomY)
+        )
+        {
+            int targetCol = tilemap.worldToCol(leftX);
+
+            xPosition =
+                (targetCol + 1) * Tilemap::TILE_SIZE;
+
+            velocityX = 0.0f;
+
+            if (!isOnGround)
+            {
+                currentState = PlayerState::WallSliding;
+
+                velocityY *= 0.1f;
+            }
+        }
+    }
+
+
+    // =========================================================
+    // ATTACK BOX
+    // =========================================================
+
+    attackBox.update();
 }
 
-void Player::draw(float cameraX, float cameraY) const {
+
+// =============================================================
+// UPDATE WITHOUT TILEMAP
+// =============================================================
+
+void Player::update()
+{
+    // Left empty on purpose to satisfy linker.
+    // Can be used when updating without tilemap context.
+}
+
+
+// =============================================================
+// DRAW
+// =============================================================
+
+void Player::draw(float cameraX, float cameraY) const
+{
     float screenX = xPosition - cameraX;
     float screenY = yPosition - cameraY;
-    //u32 debugColor = isOnGround ? C2D_Color32(0,255,0,255) : color;
-    C2D_DrawParams params = {
-        .pos = {
+
+
+    C2D_DrawParams params =
+    {
+        .pos =
+        {
             screenX,
             screenY,
-            (facingDirection > 0) ? width : -width,
+
+            (facingDirection > 0)
+                ? width
+                : -width,
+
             height
         },
-        .center = {
+
+        .center =
+        {
             0.0f,
             0.0f
         },
+
         .depth = 0.5f,
+
         .angle = 0.0f
     };
 
+
     C2D_Image spriteToDraw;
+
+
+    // ---------------------------------------------------------
+    // IDLE
+    // ---------------------------------------------------------
 
     if (currentState == PlayerState::Idle)
     {
-        spriteToDraw = idleAnimation.getCurrentFrame();
+        spriteToDraw =
+            idleAnimation.getCurrentFrame();
+    }//
+
+
+    // ---------------------------------------------------------
+    // DASH
+    // ---------------------------------------------------------
+
+    else if (currentState == PlayerState::Dashing)
+    {
+        spriteToDraw =
+            dashAnimation.getCurrentFrame();
     }
+
+
+    // ---------------------------------------------------------
+    // DEFAULT
+    // ---------------------------------------------------------
+
     else
     {
         spriteToDraw = playerSprite;
     }
 
-    C2D_DrawImage(spriteToDraw, &params);
 
-    attackBox.draw(cameraX, cameraY);
-    
+    C2D_DrawImage(
+        spriteToDraw,
+        &params
+    );
+
+
+    attackBox.draw(
+        cameraX,
+        cameraY
+    );
 }
 
-void Player::onCollision(Entity& otherEntity) {
+
+// =============================================================
+// COLLISION
+// =============================================================
+
+void Player::onCollision(Entity& otherEntity)
+{
     // Collision logic goes here
 }
 
-void Player::setIdleAnimation(C2D_Image spriteSheet, int frameCount)
+
+// =============================================================
+// IDLE ANIMATION
+// =============================================================
+
+void Player::setIdleAnimation(
+    C2D_Image spriteSheet,
+    int frameCount
+)
 {
     idleAnimation.setSpriteSheet(
         spriteSheet,
@@ -263,4 +660,23 @@ void Player::setIdleAnimation(C2D_Image spriteSheet, int frameCount)
         32,
         frameCount
     );
+}
+
+
+// =============================================================
+// DASH ANIMATION
+// =============================================================
+
+void Player::setDashAnimation(
+    C2D_Image spriteSheet,
+    int frameCount
+)
+{
+    dashAnimation.setSpriteSheet(
+        spriteSheet,
+        32,
+        32,
+        frameCount
+    );
+    dashAnimation.setFrameDuration(3); // Set the frame duration for the dash animation
 }

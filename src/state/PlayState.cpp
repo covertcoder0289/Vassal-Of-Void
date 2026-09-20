@@ -24,7 +24,7 @@ bool PlayState::init() {
     // Load the compiled t3x spritesheet from RomFS or embedded memory
     spriteSheet = C2D_SpriteSheetLoad("romfs:/gfx/sprites.t3x");
     if (!spriteSheet) {
-        //svcBreak(USERBREAK_PANIC);
+        svcBreak(USERBREAK_PANIC);
         return false; // Failed to load texture sheet
     }
 
@@ -37,21 +37,18 @@ C2D_Image idleSheet =
         spriteSheet,
         sprites_idle_spritesheet_idx
     );
-    printf(
-    "Idle: width=%u height=%u "
-    "left=%f top=%f right=%f bottom=%f\n",
-    idleSheet.subtex->width,
-    idleSheet.subtex->height,
-    idleSheet.subtex->left,
-    idleSheet.subtex->top,
-    idleSheet.subtex->right,
-    idleSheet.subtex->bottom
-);
+C2D_Image voidSurgeSheet =
+    C2D_SpriteSheetGetImage(
+        spriteSheet,
+        sprites_void_surge_idx
+    );
+
 
 player.setIdleAnimation(idleSheet, 9);
-    C2D_Image playerSprite = C2D_SpriteSheetGetImage(spriteSheet, sprites_Sprite_0008_idx);
-    player.setSprite(playerSprite);
+player.setDashAnimation(voidSurgeSheet, 18);
 
+    C2D_Image playerSprite = C2D_SpriteSheetGetImage(spriteSheet, sprites_vassal_v1_idx);
+    player.setSprite(playerSprite);
     return true;
 }
 
