@@ -14,11 +14,11 @@ namespace
 {
     struct
     {
-        float width = 32.0f;
-        float height = 32.0f;
+        float width = 40.0f;
+        float height = 40.0f;
 
-        float xPosition = (TOP_SCREEN_WIDTH - 32.0f) * 0.5f;
-        float yPosition = (TOP_SCREEN_HEIGHT - 32.0f) * 0.5f;
+        float xPosition = (TOP_SCREEN_WIDTH - 40.0f) * 0.5f;
+        float yPosition = (TOP_SCREEN_HEIGHT - 40.0f) * 0.5f;
 
         float moveSpeed = 2.0f;
         float runSpeed = 4.0f;
@@ -126,6 +126,8 @@ void Player::update(const Tilemap& tilemap)
         attackBox.lightAttack();
     }
 
+    if(attackBox.getIsActive())
+        currentState = PlayerState::Attacking;
 
     // ---------------------------------------------------------
     // DASH INPUT
@@ -298,7 +300,7 @@ void Player::update(const Tilemap& tilemap)
         }
         else
         {
-            if (isOnGround)
+            if (isOnGround && currentState != PlayerState::Attacking)
             {
                 currentState = PlayerState::Idle;
             }
@@ -560,6 +562,10 @@ void Player::draw(float cameraX, float cameraY) const
     float screenX = xPosition - cameraX;
     float screenY = yPosition - cameraY;
 
+        attackBox.draw(
+        cameraX,
+        cameraY
+    );
 
     C2D_DrawParams params =
     {
@@ -598,14 +604,14 @@ void Player::draw(float cameraX, float cameraY) const
     {
         spriteToDraw =
             idleAnimation.getCurrentFrame();
-    }//
+    }
 
 
     // ---------------------------------------------------------
     // DASH
     // ---------------------------------------------------------
 
-    else if (currentState == PlayerState::Dashing)
+     else if (currentState == PlayerState::Dashing)
     {
         spriteToDraw =
             dashAnimation.getCurrentFrame();
@@ -628,10 +634,7 @@ void Player::draw(float cameraX, float cameraY) const
     );
 
 
-    attackBox.draw(
-        cameraX,
-        cameraY
-    );
+
 }
 
 

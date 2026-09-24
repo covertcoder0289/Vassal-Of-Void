@@ -21,5 +21,5 @@ private:
     float damage = 0.0f;
     Player& player;
     bool isActive = false;
-    float attackDuration = 0.0f;
+    int attackDuration = 0;
 };

@@ -11,17 +11,20 @@ void AttackBox::draw(float cameraX, float cameraY) const
     C2D_DrawRectSolid(
         xPosition - cameraX,
         yPosition - cameraY,
-        0.4f,
+        0.6f,
         width,
         height,
         C2D_Color32(255, 0, 0, 255)
     );
+    printf("AttackBox Drawn at: (%.2f, %.2f)\n", xPosition - cameraX, yPosition);
+
+    
 }
 
 void AttackBox::lightAttack(){
 
-    height = player.getHeight();
-    width = player.getWidth();
+    height = 40.0f;
+    width = 40.0f;
     damage = 10.0f;
     
     if(player.getFacingDirection() > 0){
@@ -32,8 +35,8 @@ void AttackBox::lightAttack(){
 
     yPosition = player.getY();
     isActive = true;
-    attackDuration = 10.0f;
-
+    attackDuration = 20;
+    
 }
 
 void AttackBox::update(){
