@@ -75,6 +75,7 @@ public:
     void setDashDurationCounter(int frames) { dashDurationCounter = frames; }
     void setSprite(C2D_Image newSprite) { playerSprite = newSprite; }
     void setIdleAnimation(C2D_Image spriteSheet, int frameCount);
+    void setWalkAnimation(C2D_Image spriteSheet, int frameCount);
     void setDashAnimation(C2D_Image spriteSheet, int frameCount);
     void setSwordAnimation(C2D_Image spriteSheet, int frameCount) { attackBox.setSwordAnimation(spriteSheet, frameCount); }
     // Helper methods for common impulse operations
@@ -112,6 +113,7 @@ private:
     int dashCooldownCounter = 0; // Counter to manage dash cooldown
     C2D_Image playerSprite;
     Animation idleAnimation;
+    Animation walkAnimation;
     Animation dashAnimation;
     Animation attackAnimation;
     int dashDurationCounter = 0; // Counter to manage dash duration

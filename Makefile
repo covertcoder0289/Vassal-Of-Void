@@ -25,7 +25,7 @@ SOURCES     :=  src \
                 src/core \
                 src/entities \
                 src/entities/player \
-                src/graphics/enemies \
+                src/entities/enemies \
                 src/physics \
                 src/graphics \
                 src/player \

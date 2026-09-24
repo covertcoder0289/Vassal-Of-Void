@@ -89,6 +89,7 @@ bool Player::isSolidTile(
 
 void Player::update(const Tilemap& tilemap)
 {
+    printf("Current state: %d\n",static_cast<int>(currentState));
     // ---------------------------------------------------------
     // INPUT
     // ---------------------------------------------------------
@@ -154,19 +155,6 @@ void Player::update(const Tilemap& tilemap)
 
     // =========================================================
     // DASHING
-    // =========================================================
-    //
-    // Dashing is handled separately from normal movement.
-    //
-    // This is important because the normal movement code below
-    // can otherwise change:
-    //
-    //      Dashing -> Falling
-    //      Dashing -> Jumping
-    //      Dashing -> WallSliding
-    //
-    // before the dash animation gets a chance to play.
-    //
     // =========================================================
 
     if (currentState == PlayerState::Dashing)
@@ -284,44 +272,30 @@ void Player::update(const Tilemap& tilemap)
     // NORMAL HORIZONTAL MOVEMENT
     // ---------------------------------------------------------
 
-    if (horizontalInputLockCounter == 0)
+if (horizontalInputLockCounter == 0)
+{
+    if (moveX > stickDeadZone || moveX < -stickDeadZone)
     {
-        if (
-            (moveX < -stickDeadZone && moveX >= -1.0f) ||
-            (moveX > stickDeadZone && moveX <= 1.0f)
-        )
+        velocityX = moveX * moveSpeed;
+
+        if (isOnGround)
         {
-            if (isOnGround)
-            {
-                currentState = PlayerState::Walking;
-            }
-
-            velocityX = moveX * moveSpeed;
+            currentState = PlayerState::Walking;
         }
-        else
-        {
-            if (isOnGround && currentState != PlayerState::Attacking)
-            {
-                currentState = PlayerState::Idle;
-            }
-
-            velocityX = 0.0f;
-        }
-    }
-
-
-    // ---------------------------------------------------------
-    // IDLE ANIMATION
-    // ---------------------------------------------------------
-
-    if (currentState == PlayerState::Idle)
-    {
-        idleAnimation.update();
     }
     else
     {
-        idleAnimation.reset();
+        velocityX = 0.0f;
+
+        if (isOnGround)
+        {
+            currentState = PlayerState::Idle;
+        }
     }
+}
+
+
+
 
 
     // ---------------------------------------------------------
@@ -412,24 +386,31 @@ void Player::update(const Tilemap& tilemap)
         float leftX = xPosition + 1.0f;
         float rightX = xPosition + width - 1.0f;
 
-        if (
-            isSolidTile(tilemap, leftX, footY) ||
-            isSolidTile(tilemap, rightX, footY)
-        )
-        {
-            int targetRow = tilemap.worldToRow(footY);
+if (
+    isSolidTile(tilemap, leftX, footY) ||
+    isSolidTile(tilemap, rightX, footY)
+)
+{
+    int targetRow = tilemap.worldToRow(footY);
 
-            yPosition =
-                (targetRow * Tilemap::TILE_SIZE) - height;
+    yPosition =
+        (targetRow * Tilemap::TILE_SIZE) - height;
 
-            currentState = PlayerState::Idle;
+    velocityY = 0.0f;
 
-            velocityY = 0.0f;
+    isOnGround = true;
 
-            isOnGround = true;
+    hasDoubleJumped = false;
 
-            hasDoubleJumped = false;
-        }
+    if (moveX > stickDeadZone || moveX < -stickDeadZone)
+    {
+        currentState = PlayerState::Walking;
+    }
+    else
+    {
+        currentState = PlayerState::Idle;
+    }
+}
     }
 
 
@@ -533,6 +514,36 @@ void Player::update(const Tilemap& tilemap)
         }
     }
 
+    // =============================================================
+// ANIMATION UPDATE
+// =============================================================
+
+if (currentState == PlayerState::Idle)
+{
+    idleAnimation.update();
+}
+else
+{
+    idleAnimation.reset();
+}
+
+if (currentState == PlayerState::Walking)
+{
+    walkAnimation.update();
+}
+else
+{
+    walkAnimation.reset();
+}
+
+if (currentState == PlayerState::Dashing)
+{
+    dashAnimation.update();
+}
+else
+{
+    dashAnimation.reset();
+}
 
     // =========================================================
     // ATTACK BOX
@@ -601,6 +612,9 @@ void Player::draw(float cameraX, float cameraY) const
         //spriteToDraw = playerSprite;
         //animate player sprite for attack
     }
+    //WALKING
+    else if(currentState == PlayerState::Walking)
+    {printf("walking\n"); spriteToDraw = walkAnimation.getCurrentFrame();}
     // ---------------------------------------------------------
     // DEFAULT
     // ---------------------------------------------------------
@@ -634,8 +648,20 @@ void Player::setIdleAnimation(
 {
     idleAnimation.setSpriteSheet(
         spriteSheet,
-        32,
-        32,
+        40,
+        40,
+        frameCount
+    );
+}
+void Player::setWalkAnimation(
+    C2D_Image spriteSheet,
+    int frameCount
+)
+{
+    walkAnimation.setSpriteSheet(
+        spriteSheet,
+        40,
+        40,
         frameCount
     );
 }
@@ -656,5 +682,5 @@ void Player::setDashAnimation(
         32,
         frameCount
     );
-    dashAnimation.setFrameDuration(3); // Set the frame duration for the dash animation
+    dashAnimation.setFrameDuration(1); // Set the frame duration for the dash animation
 }

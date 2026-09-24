@@ -8,10 +8,12 @@ public:
 
     virtual void update() = 0;
     virtual void draw() const = 0;
+    virtual void draw(float cameraX, float cameraY) const = 0;
     
     AABB getBounds() const { return {xPosition, yPosition, width, height}; }
     virtual void onCollision(Entity& otherEntity) = 0;
 
+    virtual void takeDamage(float amount) {}
     //Setters
     void setPosition(float newX, float newY) { xPosition = newX; yPosition = newY; }
     void setVelocityX(float vx) { velocityX = vx; }

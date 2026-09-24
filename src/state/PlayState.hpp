@@ -2,7 +2,9 @@
 #include "GameState.hpp"
 #include "PauseState.hpp"
 #include "entities/player/Player.hpp"
+#include "entities/enemies/HollowCrawler.hpp"
 #include "entities/player/AbilityManager.hpp"
+#include "entities/EntityManager.hpp"
 #include "world/Tilemap.hpp"
 #include "core/Camera.hpp"
 #include <memory>
@@ -30,5 +32,6 @@ private:
     Tilemap tilemap;
     C2D_SpriteSheet spriteSheet = nullptr;
     C2D_Image blockTileImage;
-
+    Camera camera; // Top screen resolution
+    EntityManager entityManager;
 };

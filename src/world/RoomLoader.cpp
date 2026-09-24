@@ -69,7 +69,6 @@ bool RoomLoader::loadFromFile(
     std::vector<int>& outData
 ) {
     std::ifstream file(path);
-
     if (!file.is_open()) {
         printf("ROOM ERROR: cannot open %s\n", path.c_str());
         return false;
@@ -83,292 +82,157 @@ bool RoomLoader::loadFromFile(
         (std::istreambuf_iterator<char>(file)),
         std::istreambuf_iterator<char>()
     );
-
     file.close();
 
-
     // -----------------------------------------------------
-    // Find root map dimensions
+    // Locate the "layers" array boundaries FIRST, using real
+    // bracket-depth tracking (not a naive find(']'), since layer
+    // objects contain their own nested "data"/"objects" arrays).
+    // Everything below searches for root properties OUTSIDE this
+    // range, so a layer's — or a point object's — own width/height
+    // can never be mistaken for the map's.
     // -----------------------------------------------------
-    //
-    // Use the LAST width/height because other objects/layers
-    // can also contain width/height properties.
-    //
 
-    size_t widthPos = content.rfind("\"width\"");
-
-    if (widthPos != std::string::npos) {
-
-        size_t colonPos = content.find(':', widthPos);
-
-        if (colonPos != std::string::npos) {
-
-            size_t valuePos = colonPos + 1;
-
-            while (
-                valuePos < content.size() &&
-                std::isspace(
-                    static_cast<unsigned char>(
-                        content[valuePos]
-                    )
-                )
-            ) {
-                valuePos++;
-            }
-
-            outCols = static_cast<int>(
-                std::strtol(
-                    content.c_str() + valuePos,
-                    nullptr,
-                    10
-                )
-            );
-        }
-    }
-
-
-    size_t heightPos = content.rfind("\"height\"");
-
-    if (heightPos != std::string::npos) {
-
-        size_t colonPos = content.find(':', heightPos);
-
-        if (colonPos != std::string::npos) {
-
-            size_t valuePos = colonPos + 1;
-
-            while (
-                valuePos < content.size() &&
-                std::isspace(
-                    static_cast<unsigned char>(
-                        content[valuePos]
-                    )
-                )
-            ) {
-                valuePos++;
-            }
-
-            outRows = static_cast<int>(
-                std::strtol(
-                    content.c_str() + valuePos,
-                    nullptr,
-                    10
-                )
-            );
-        }
-    }
-
-
-    if (outCols <= 0 || outRows <= 0) {
-
-        printf(
-            "ROOM ERROR: invalid dimensions %d x %d\n",
-            outCols,
-            outRows
-        );
-
+    size_t layersKeyPos = content.find("\"layers\"");
+    if (layersKeyPos == std::string::npos) {
+        printf("ROOM ERROR: layers array not found\n");
         return false;
     }
 
-
-    // Find tile layer
-    size_t tileLayerTypePos =
-        content.find("\"type\":\"tilelayer\"");
-
-    if (tileLayerTypePos == std::string::npos) {
-
-        tileLayerTypePos =
-            content.find("\"type\": \"tilelayer\"");
+    size_t layersColonPos = content.find(':', layersKeyPos);
+    if (layersColonPos == std::string::npos) {
+        printf("ROOM ERROR: layers colon not found\n");
+        return false;
     }
 
-    if (tileLayerTypePos == std::string::npos) {
+    size_t layersArrayStart = skipWhitespace(content, layersColonPos + 1);
+    if (layersArrayStart >= content.size() || content[layersArrayStart] != '[') {
+        printf("ROOM ERROR: layers array '[' not found\n");
+        return false;
+    }
 
+    int depth = 0;
+    size_t layersArrayEnd = std::string::npos;
+    for (size_t i = layersArrayStart; i < content.size(); ++i) {
+        if (content[i] == '[') depth++;
+        else if (content[i] == ']') {
+            depth--;
+            if (depth == 0) { layersArrayEnd = i; break; }
+        }
+    }
+    if (layersArrayEnd == std::string::npos) {
+        printf("ROOM ERROR: layers array ']' not found\n");
+        return false;
+    }
+
+    // -----------------------------------------------------
+    // Root map dimensions — height precedes "layers" alphabetically
+    // in every Tiled export, width follows it. Searching each in
+    // its own half of the file (outside the layers content entirely)
+    // makes this correct regardless of layer order or count.
+    // -----------------------------------------------------
+
+    std::string beforeLayers = content.substr(0, layersKeyPos);
+    std::string afterLayers  = content.substr(layersArrayEnd);
+
+    size_t heightPos = beforeLayers.find("\"height\"");
+    if (heightPos != std::string::npos) {
+        size_t colonPos = beforeLayers.find(':', heightPos);
+        if (colonPos != std::string::npos) {
+            size_t valuePos = skipWhitespace(beforeLayers, colonPos + 1);
+            outRows = static_cast<int>(std::strtol(beforeLayers.c_str() + valuePos, nullptr, 10));
+        }
+    }
+
+    size_t widthPos = afterLayers.find("\"width\"");
+    if (widthPos != std::string::npos) {
+        size_t colonPos = afterLayers.find(':', widthPos);
+        if (colonPos != std::string::npos) {
+            size_t valuePos = skipWhitespace(afterLayers, colonPos + 1);
+            outCols = static_cast<int>(std::strtol(afterLayers.c_str() + valuePos, nullptr, 10));
+        }
+    }
+
+    if (outCols <= 0 || outRows <= 0) {
+        printf("ROOM ERROR: invalid dimensions %d x %d\n", outCols, outRows);
+        return false;
+    }
+
+    // ----- everything below here (tilelayer/data extraction) is
+    // unchanged from what you already have — it forward-searches
+    // for the tilelayer object specifically and was never actually
+    // order-dependent, so it doesn't need touching.
+
+    size_t tileLayerTypePos = content.find("\"type\":\"tilelayer\"");
+    if (tileLayerTypePos == std::string::npos) {
+        tileLayerTypePos = content.find("\"type\": \"tilelayer\"");
+    }
+    if (tileLayerTypePos == std::string::npos) {
         printf("ROOM ERROR: tilelayer not found\n");
         return false;
     }
 
-
-    // -----------------------------------------------------
-    // Find the beginning of THIS layer object
-    // -----------------------------------------------------
-    //
-    // The "data" property can appear before "type".
-    //
-    // Example:
-    //
-    // {
-    //     "data":[...],
-    //     "height":52,
-    //     ...
-    //     "type":"tilelayer"
-    // }
-    //
-    // So we must search backwards to the '{' belonging
-    // to this layer.
-    //
-
-    size_t layerStart =
-        content.rfind('{', tileLayerTypePos);
-
+    size_t layerStart = content.rfind('{', tileLayerTypePos);
     if (layerStart == std::string::npos) {
-
         printf("ROOM ERROR: tilelayer object start not found\n");
         return false;
     }
 
-
-    // Find "data" inside this layer
-    size_t dataKeyPos =
-        content.find("\"data\"", layerStart);
-
-    if (
-        dataKeyPos == std::string::npos ||
-        dataKeyPos > tileLayerTypePos
-    ) {
-
-        printf(
-            "ROOM ERROR: data property not found in tilelayer\n"
-        );
-
+    size_t dataKeyPos = content.find("\"data\"", layerStart);
+    if (dataKeyPos == std::string::npos || dataKeyPos > tileLayerTypePos) {
+        printf("ROOM ERROR: data property not found in tilelayer\n");
         return false;
     }
 
-    // Find ':' after "data"
-    size_t dataColonPos =
-        content.find(':', dataKeyPos);
-
+    size_t dataColonPos = content.find(':', dataKeyPos);
     if (dataColonPos == std::string::npos) {
-
         printf("ROOM ERROR: data colon not found\n");
         return false;
     }
 
-
-    // Skip whitespace
-    size_t dataPos =
-        dataColonPos + 1;
-
-    while (
-        dataPos < content.size() &&
-        std::isspace(
-            static_cast<unsigned char>(
-                content[dataPos]
-            )
-        )
-    ) {
-        dataPos++;
-    }
-
-    // Verify '['
-    if (
-        dataPos >= content.size() ||
-        content[dataPos] != '['
-    ) {
-
-        printf(
-            "ROOM ERROR: data array '[' not found\n"
-        );
-
+    size_t dataPos = skipWhitespace(content, dataColonPos + 1);
+    if (dataPos >= content.size() || content[dataPos] != '[') {
+        printf("ROOM ERROR: data array '[' not found\n");
         return false;
     }
-    // Move past '['
     dataPos++;
 
-
-    // Find closing ']'
-    size_t dataEnd =
-        content.find(']', dataPos);
-
+    size_t dataEnd = content.find(']', dataPos);
     if (dataEnd == std::string::npos) {
-
-        printf(
-            "ROOM ERROR: data array ']' not found\n"
-        );
-
+        printf("ROOM ERROR: data array ']' not found\n");
         return false;
     }
 
-    // Parse tile indices
-    const char* ptr =
-        content.c_str() + dataPos;
-
-    const char* endPtr =
-        content.c_str() + dataEnd;
+    const char* ptr = content.c_str() + dataPos;
+    const char* endPtr = content.c_str() + dataEnd;
 
     while (ptr < endPtr) {
-
-        // Skip commas and whitespace
-        while (
-            ptr < endPtr &&
-            (
-                *ptr == ',' ||
-                std::isspace(
-                    static_cast<unsigned char>(*ptr)
-                )
-            )
-        ) {
+        while (ptr < endPtr && (*ptr == ',' || std::isspace(static_cast<unsigned char>(*ptr)))) {
             ptr++;
         }
-
-        if (ptr >= endPtr) {
-            break;
-        }
+        if (ptr >= endPtr) break;
 
         char* nextPtr = nullptr;
-        long value =
-            std::strtol(
-                ptr,
-                &nextPtr,
-                10
-            );
+        long value = std::strtol(ptr, &nextPtr, 10);
 
         if (ptr != nextPtr) {
-            outData.push_back(
-                static_cast<int>(value)
-            );
+            outData.push_back(static_cast<int>(value));
             ptr = nextPtr;
         } else {
-            // Prevent infinite loop if something unexpected
-            // appears in the data array.
             ptr++;
         }
     }
 
-    // Validate tile count
     if (outData.empty()) {
-
-        printf(
-            "ROOM ERROR: no tile data parsed\n"
-        );
-
+        printf("ROOM ERROR: no tile data parsed\n");
         return false;
     }
 
-    size_t expectedSize =
-        static_cast<size_t>(outCols) *
-        static_cast<size_t>(outRows);
-
-
-    // printf(
-    //     "ROOM LOAD DATA:\n"
-    //     "  dimensions: %d x %d\n"
-    //     "  expected tiles: %zu\n"
-    //     "  parsed tiles:   %zu\n",
-    //     outCols,
-    //     outRows,
-    //     expectedSize,
-    //     outData.size()
-    // );
-
+    size_t expectedSize = static_cast<size_t>(outCols) * static_cast<size_t>(outRows);
     if (outData.size() != expectedSize) {
-
-        printf(
-            "ROOM ERROR: tile count mismatch!\n"
-        );
-
+        printf("ROOM ERROR: tile count mismatch!\n");
         return false;
     }
-    //printf("ROOM LOAD SUCCESS\n");
 
     return true;
 }
