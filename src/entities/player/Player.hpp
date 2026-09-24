@@ -76,6 +76,7 @@ public:
     void setSprite(C2D_Image newSprite) { playerSprite = newSprite; }
     void setIdleAnimation(C2D_Image spriteSheet, int frameCount);
     void setDashAnimation(C2D_Image spriteSheet, int frameCount);
+    void setSwordAnimation(C2D_Image spriteSheet, int frameCount) { attackBox.setSwordAnimation(spriteSheet, frameCount); }
     // Helper methods for common impulse operations
     void setVelocity(float newVx, float newVy) { velocityX = newVx; velocityY = newVy; }
     void addYVelocity(float amount) { velocityY += amount; }
@@ -112,5 +113,6 @@ private:
     C2D_Image playerSprite;
     Animation idleAnimation;
     Animation dashAnimation;
+    Animation attackAnimation;
     int dashDurationCounter = 0; // Counter to manage dash duration
 };

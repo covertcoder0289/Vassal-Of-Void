@@ -1,6 +1,8 @@
 //src/entities/player/AttackBox.hpp
 #pragma once
 
+#include "graphics/Animation.hpp"
+
 class Player;
 
 class AttackBox{
@@ -10,6 +12,11 @@ public:
     void lightAttack();
     void draw(float cameraX, float cameraY) const;
     bool getIsActive() const { return isActive; }
+
+    void setSwordAnimation(
+    C2D_Image spriteSheet,
+    int frameCount
+);
 
 private:
     float xPosition = 0.0f;
@@ -22,4 +29,7 @@ private:
     Player& player;
     bool isActive = false;
     int attackDuration = 0;
+
+    Animation swordAnimation;
+
 };

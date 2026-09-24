@@ -43,9 +43,16 @@ C2D_Image voidSurgeSheet =
         sprites_void_surge_idx
     );
 
+C2D_Image attackSheet =
+    C2D_SpriteSheetGetImage(
+        spriteSheet,
+        sprites_attack_sword_idx
+    );
+
 
 player.setIdleAnimation(idleSheet, 9);
 player.setDashAnimation(voidSurgeSheet, 18);
+player.setSwordAnimation(attackSheet, 4);
 
     C2D_Image playerSprite = C2D_SpriteSheetGetImage(spriteSheet, sprites_vassal_v1_idx);
     player.setSprite(playerSprite);

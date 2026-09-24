@@ -561,34 +561,19 @@ void Player::draw(float cameraX, float cameraY) const
 {
     float screenX = xPosition - cameraX;
     float screenY = yPosition - cameraY;
-
-        attackBox.draw(
-        cameraX,
-        cameraY
-    );
+    attackBox.draw(cameraX,cameraY);
 
     C2D_DrawParams params =
     {
         .pos =
         {
-            screenX,
-            screenY,
-
-            (facingDirection > 0)
-                ? width
-                : -width,
-
+            screenX,screenY,(facingDirection > 0)
+                ? width: -width,
             height
         },
 
-        .center =
-        {
-            0.0f,
-            0.0f
-        },
-
+        .center ={0.0f, 0.0f},
         .depth = 0.5f,
-
         .angle = 0.0f
     };
 
@@ -602,22 +587,20 @@ void Player::draw(float cameraX, float cameraY) const
 
     if (currentState == PlayerState::Idle)
     {
-        spriteToDraw =
-            idleAnimation.getCurrentFrame();
+        spriteToDraw = idleAnimation.getCurrentFrame();
     }
-
-
     // ---------------------------------------------------------
     // DASH
     // ---------------------------------------------------------
 
-     else if (currentState == PlayerState::Dashing)
+    else if (currentState == PlayerState::Dashing)
     {
-        spriteToDraw =
-            dashAnimation.getCurrentFrame();
+        spriteToDraw = dashAnimation.getCurrentFrame();
+    }else if (currentState == PlayerState::Attacking)
+    {
+        //spriteToDraw = playerSprite;
+        //animate player sprite for attack
     }
-
-
     // ---------------------------------------------------------
     // DEFAULT
     // ---------------------------------------------------------
@@ -628,16 +611,8 @@ void Player::draw(float cameraX, float cameraY) const
     }
 
 
-    C2D_DrawImage(
-        spriteToDraw,
-        &params
-    );
-
-
-
+    C2D_DrawImage(spriteToDraw, &params);
 }
-
-
 // =============================================================
 // COLLISION
 // =============================================================
