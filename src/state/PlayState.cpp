@@ -2,7 +2,7 @@
 #include "PlayState.hpp"
 #include "MenuState.hpp"
 #include "StateManager.hpp"
-//#include "../physics/CollisionWorld.hpp"
+#include "debug/Debug.hpp"
 #include <3ds.h>
 #include "sprites.h"
 #include "world/RoomLoader.hpp"
@@ -33,17 +33,17 @@ bool PlayState::init() {
     if (!spriteSheet) 
     {
         svcBreak(USERBREAK_PANIC);
-        return false; // Failed to load texture sheet
+        printf("Failed to load spritesheet in Playstate::init()\n");
+        return false; 
     }
 
     blockTileImage = C2D_SpriteSheetGetImage(spriteSheet, sprites_test_room_block_idx);
-    // Pass the tile image handle to the tilemap so it knows what to render
-    tilemap.setTileTexture(blockTileImage);
     C2D_Image idleSheet = C2D_SpriteSheetGetImage(spriteSheet, sprites_idle_spritesheet_idx);
     C2D_Image voidSurgeSheet = C2D_SpriteSheetGetImage(spriteSheet, sprites_void_surge_idx);
     C2D_Image attackSheet = C2D_SpriteSheetGetImage(spriteSheet, sprites_attack_sword_idx);
     C2D_Image walkSheet = C2D_SpriteSheetGetImage(spriteSheet,sprites_walking_spritesheet_idx);
-
+    
+    tilemap.setTileTexture(blockTileImage);
     player.setIdleAnimation(idleSheet, 9);
     player.setWalkAnimation(walkSheet, 9);
     player.setDashAnimation(voidSurgeSheet, 18);
@@ -76,7 +76,7 @@ void PlayState::buildTestRoom()
     if (RoomLoader::loadSpawnPoint("romfs:/rooms/enemies.json", spawnX, spawnY)) 
         player.setPosition(spawnX, spawnY);
 
-        entityManager.addEntity(std::make_unique<HollowCrawler>(850.0f, 787.0f));
+    entityManager.addEntity(std::make_unique<HollowCrawler>(850.0f, 787.0f));
 
 }
 

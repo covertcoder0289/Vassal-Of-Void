@@ -25,13 +25,14 @@ public:
     void buildTestRoom();
 
 private:    
-    Player player;
-    bool isPaused = false;
     StateManager& stateManager;
-    std::unique_ptr<PauseState> pauseOverlay;
     Tilemap tilemap;
-    C2D_SpriteSheet spriteSheet = nullptr;
-    C2D_Image blockTileImage;
-    Camera camera; // Top screen resolution
+    Player player;
+    Camera camera;
     EntityManager entityManager;
+    
+    bool isPaused = false;
+    std::unique_ptr<PauseState> pauseOverlay = nullptr;
+    C2D_SpriteSheet spriteSheet = nullptr;
+    C2D_Image blockTileImage = {};
 };
