@@ -33,4 +33,5 @@ protected:
     float maxHealth = 10.0f;
     float damage = 5.0f;
     EnemyState state = EnemyState::Idle;
+    
 };

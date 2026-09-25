@@ -25,6 +25,8 @@ public:
     float getY() const { return yPosition; }
     float getVelocityX() const { return velocityX; }
     float getVelocityY() const { return velocityY; }
+    float getXCenter() const {return xPosition + (width / 2);}
+    float getYCenter() const {return yPosition + (height / 2);}
     bool getOnGround() const { return isOnGround; }
     bool getIsActive() const { return isActive; }
 

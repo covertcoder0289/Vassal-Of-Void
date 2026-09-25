@@ -89,7 +89,6 @@ bool Player::isSolidTile(
 
 void Player::update(const Tilemap& tilemap)
 {
-    printf("Current state: %d\n",static_cast<int>(currentState));
     // ---------------------------------------------------------
     // INPUT
     // ---------------------------------------------------------
@@ -614,7 +613,9 @@ void Player::draw(float cameraX, float cameraY) const
     }
     //WALKING
     else if(currentState == PlayerState::Walking)
-    {printf("walking\n"); spriteToDraw = walkAnimation.getCurrentFrame();}
+    {
+        spriteToDraw = walkAnimation.getCurrentFrame();
+    }
     // ---------------------------------------------------------
     // DEFAULT
     // ---------------------------------------------------------

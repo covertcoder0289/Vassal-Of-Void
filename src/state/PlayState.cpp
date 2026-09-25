@@ -76,7 +76,7 @@ void PlayState::buildTestRoom()
     if (RoomLoader::loadSpawnPoint("romfs:/rooms/enemies.json", spawnX, spawnY)) 
         player.setPosition(spawnX, spawnY);
 
-    entityManager.addEntity(std::make_unique<HollowCrawler>(850.0f, 787.0f));
+    entityManager.addEntity(std::make_unique<HollowCrawler>(500.0f, 787.0f,player));
 
 }
 
@@ -120,6 +120,7 @@ void PlayState::drawTopScreen() {
     tilemap.draw(camera.getX(), camera.getY());
     player.draw(camera.getX(), camera.getY());
     entityManager.draw(camera.getX(), camera.getY());
+
     if (isPaused) {
         C2D_DrawRectSolid(0.0f, 0.0f, 0.2f, 400.0f, 240.0f, C2D_Color32(0, 0, 0, 180));
         pauseOverlay->drawTopScreen();

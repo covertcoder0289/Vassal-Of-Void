@@ -3,10 +3,11 @@
 #include <3ds.h>
 #include <citro2d.h>
 #include "common/colors.hpp"
+#include "PlayerDetection.hpp"
 
 class HollowCrawler : public Enemy {
 public:
-    HollowCrawler(float startX, float startY);
+    HollowCrawler(float startX, float startY,Player& player);
     ~HollowCrawler() override = default;
 
     // Must match const-correctness and pure virtual requirements
@@ -17,4 +18,8 @@ public:
 
 private:
     float walkSpeed = 0.5f;
+    float playerDetectionRange = 50.0f;
+    //PlayerDetection playerDetection;
+    Player& player;
+    PlayerDetection playerDetection;
 };

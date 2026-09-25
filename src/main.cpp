@@ -30,7 +30,6 @@ int main(int argc, char* argv[]) {
         InputManager::update(); //contains hidScanInput() because the I need to call update in main otherwise user input wont work. This forces me to not leave out this step 
 
         stateManager.update();
-        u32 kDown = hidKeysDown();
         C3D_FrameBegin(C3D_FRAME_SYNCDRAW);
 
         C2D_TargetClear(top, C2D_Color32(20, 20, 30, 255));
